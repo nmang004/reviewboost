@@ -68,7 +68,7 @@ export default function AboutPage() {
             </span>
           </h1>
           <p className="mt-8 max-w-3xl mx-auto text-xl text-gray-600 sm:text-2xl leading-relaxed">
-            We're on a mission to make review collection engaging, rewarding, and effective for businesses of all sizes.
+            We&apos;re on a mission to make review collection engaging, rewarding, and effective for businesses of all sizes.
           </p>
         </div>
 
@@ -88,12 +88,12 @@ export default function AboutPage() {
                   Even with incentives in place, employee engagement was low.
                 </p>
                 <p>
-                  That's when they had an idea: what if collecting reviews could be as engaging as playing a game? 
+                  That&apos;s when they had an idea: what if collecting reviews could be as engaging as playing a game? 
                   What if employees could compete, earn recognition, and feel genuinely motivated to ask for reviews?
                 </p>
                 <p>
                   Today, ReviewBoost helps hundreds of businesses transform their review collection process into an engaging experience 
-                  that employees love and customers appreciate. We're proud to be part of our customers' growth stories.
+                  that employees love and customers appreciate. We&apos;re proud to be part of our customers&apos; growth stories.
                 </p>
               </div>
             </CardContent>

@@ -112,7 +112,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12">
           <h1 className="font-serif text-4xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2 text-lg">Welcome back! Here's your team's performance overview.</p>
+          <p className="text-gray-600 mt-2 text-lg">Welcome back! Here&apos;s your team&apos;s performance overview.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-white">

@@ -64,13 +64,13 @@ export default function ContactPage() {
         {/* Hero Section */}
         <div className="text-center mb-20">
           <h1 className="font-serif text-5xl font-bold text-gray-900 sm:text-6xl md:text-7xl leading-tight">
-            Let's Start a
+            Let&apos;s Start a
             <span className="block text-primary bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
               Conversation
             </span>
           </h1>
           <p className="mt-8 max-w-2xl mx-auto text-xl text-gray-600 sm:text-2xl leading-relaxed">
-            Have questions about ReviewBoost? We're here to help you transform your review collection process.
+            Have questions about ReviewBoost? We&apos;re here to help you transform your review collection process.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export default function ContactPage() {
               <CardHeader>
                 <CardTitle className="text-2xl font-semibold text-gray-900">Send us a message</CardTitle>
                 <CardDescription className="text-lg text-gray-600">
-                  Fill out the form below and we'll get back to you as soon as possible.
+                  Fill out the form below and we&apos;ll get back to you as soon as possible.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -226,7 +226,7 @@ export default function ContactPage() {
                 </p>
               </div>
               <p className="mt-6 text-gray-600">
-                For urgent matters outside business hours, please email us and we'll respond as soon as possible.
+                For urgent matters outside business hours, please email us and we&apos;ll respond as soon as possible.
               </p>
             </CardContent>
           </Card>
