@@ -1,29 +1,44 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Trophy, Medal, Award } from 'lucide-react'
 import { LeaderboardEntry } from '@/types'
+import { useTeam, useAuthenticatedFetch } from '@/contexts/TeamContext'
 
 export function Leaderboard() {
+  const { currentTeam } = useTeam()
+  const authenticatedFetch = useAuthenticatedFetch()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchLeaderboard()
-  }, [])
+  const fetchLeaderboard = useCallback(async () => {
+    if (!currentTeam) return
 
-  const fetchLeaderboard = async () => {
     try {
-      const response = await fetch('/api/leaderboard')
-      if (!response.ok) throw new Error('Failed to fetch leaderboard')
+      setLoading(true)
+      const response = await authenticatedFetch('/api/leaderboard')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch leaderboard')
+      }
       
       const data = await response.json()
-      setLeaderboard(data)
+      setLeaderboard(data.leaderboard || [])
     } catch (error) {
       console.error('Error fetching leaderboard:', error)
+      setLeaderboard([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentTeam, authenticatedFetch])
+
+  useEffect(() => {
+    if (currentTeam) {
+      fetchLeaderboard()
+    } else {
+      setLeaderboard([])
+      setLoading(false)
+    }
+  }, [currentTeam, fetchLeaderboard])
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -59,8 +74,13 @@ export function Leaderboard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Leaderboard</CardTitle>
-        <CardDescription>Top performing employees based on reviews and points</CardDescription>
+        <CardTitle>Team Leaderboard</CardTitle>
+        <CardDescription>
+          {currentTeam 
+            ? `Top performing members in ${currentTeam.name}` 
+            : 'Select a team to view leaderboard'
+          }
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -87,9 +107,12 @@ export function Leaderboard() {
             </div>
           ))}
           
-          {leaderboard.length === 0 && (
+          {leaderboard.length === 0 && !loading && (
             <p className="text-center text-gray-500 py-8">
-              No reviews submitted yet. Be the first to earn points!
+              {currentTeam 
+                ? 'No reviews submitted yet. Be the first to earn points!' 
+                : 'Select a team to view leaderboard'
+              }
             </p>
           )}
         </div>

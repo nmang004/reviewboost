@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/hooks/useAuth'
+import { useTeam, useAuthenticatedFetch } from '@/contexts/TeamContext'
+import { TeamSelector } from '@/components/TeamSelector'
 
 const reviewSchema = z.object({
   customerName: z.string().min(2, 'Customer name must be at least 2 characters'),
@@ -44,6 +46,8 @@ const jobTypes = [
 export default function SubmitReviewPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { currentTeam, teamsLoading } = useTeam()
+  const authenticatedFetch = useAuthenticatedFetch()
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -64,8 +68,8 @@ export default function SubmitReviewPage() {
   const hasPhoto = watch('hasPhoto')
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking user
-    if (authLoading) {
+    // Wait for auth and teams to finish loading before checking user
+    if (authLoading || teamsLoading) {
       return
     }
     
@@ -78,7 +82,7 @@ export default function SubmitReviewPage() {
       router.push('/dashboard')
       return
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, teamsLoading, router])
 
   const onSubmit = async (data: ReviewFormData) => {
     if (!user) {
@@ -86,24 +90,28 @@ export default function SubmitReviewPage() {
       return
     }
 
+    if (!currentTeam) {
+      alert('Please select a team before submitting a review.')
+      return
+    }
+
     setIsLoading(true)
     try {
-      const response = await fetch('/api/reviews/submit', {
+      const response = await authenticatedFetch('/api/reviews/submit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           customer_name: data.customerName,
           job_type: data.jobType,
           has_photo: data.hasPhoto,
           keywords: data.keywords,
           employee_id: user.id,
+          team_id: currentTeam.id,
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to submit review')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to submit review')
       }
 
       setSuccess(true)
@@ -115,19 +123,19 @@ export default function SubmitReviewPage() {
       }, 3000)
     } catch (error) {
       console.error('Error submitting review:', error)
-      alert('Failed to submit review. Please try again.')
+      alert(`Failed to submit review: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Show loading state while auth is being checked
-  if (authLoading) {
+  // Show loading state while auth and teams are being checked
+  if (authLoading || teamsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     )
@@ -135,7 +143,10 @@ export default function SubmitReviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Team Selector */}
+        <TeamSelector showCreateTeam={true} />
+        
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl font-bold">Submit a Review</CardTitle>
@@ -150,6 +161,12 @@ export default function SubmitReviewPage() {
               </div>
             )}
 
+            {!currentTeam && (
+              <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md">
+                Please select a team above before submitting a review.
+              </div>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="customerName">Customer Name</Label>
@@ -157,7 +174,7 @@ export default function SubmitReviewPage() {
                   id="customerName"
                   placeholder="Enter customer's full name"
                   {...register('customerName')}
-                  disabled={isLoading}
+                  disabled={isLoading || !currentTeam}
                 />
                 {errors.customerName && (
                   <p className="text-sm text-red-600">{errors.customerName.message}</p>
@@ -168,7 +185,7 @@ export default function SubmitReviewPage() {
                 <Label htmlFor="jobType">Job Type</Label>
                 <Select
                   onValueChange={(value) => setValue('jobType', value)}
-                  disabled={isLoading}
+                  disabled={isLoading || !currentTeam}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select job type" />
@@ -191,7 +208,7 @@ export default function SubmitReviewPage() {
                   id="hasPhoto"
                   checked={hasPhoto}
                   onCheckedChange={(checked) => setValue('hasPhoto', checked as boolean)}
-                  disabled={isLoading}
+                  disabled={isLoading || !currentTeam}
                 />
                 <Label
                   htmlFor="hasPhoto"
@@ -208,7 +225,7 @@ export default function SubmitReviewPage() {
                   placeholder="Enter keywords from the customer's review (e.g., professional, timely, clean work, friendly service)"
                   rows={4}
                   {...register('keywords')}
-                  disabled={isLoading}
+                  disabled={isLoading || !currentTeam}
                 />
                 {errors.keywords && (
                   <p className="text-sm text-red-600">{errors.keywords.message}</p>
@@ -219,15 +236,15 @@ export default function SubmitReviewPage() {
                 <Button
                   type="submit"
                   className="flex-1"
-                  disabled={isLoading}
+                  disabled={isLoading || !currentTeam}
                 >
-                  {isLoading ? 'Submitting...' : 'Submit Review'}
+                  {isLoading ? 'Submitting...' : !currentTeam ? 'Select Team First' : 'Submit Review'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.push('/dashboard')}
-                  disabled={isLoading}
+                  disabled={isLoading || !currentTeam}
                 >
                   View Dashboard
                 </Button>

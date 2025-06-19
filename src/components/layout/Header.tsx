@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
-import { Menu, X, Trophy } from 'lucide-react'
+import { useTeam } from '@/contexts/TeamContext'
+import { Menu, X, Trophy, Users } from 'lucide-react'
 
 export function Header() {
   const pathname = usePathname()
   const { user, signOut } = useAuth()
+  const { currentTeam, userTeams } = useTeam()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -67,8 +69,19 @@ export function Header() {
             ))}
           </div>
 
-          {/* Desktop Auth Buttons */}
+          {/* Team Indicator & Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Team Indicator */}
+            {user && currentTeam && (
+              <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg">
+                <Users className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">{currentTeam.name}</span>
+                {userTeams.length > 1 && (
+                  <span className="text-xs text-blue-600">({userTeams.length} teams)</span>
+                )}
+              </div>
+            )}
+            
             {user ? (
               <>
                 {user.role === 'business_owner' ? (
