@@ -31,27 +31,9 @@ export default function AboutPage() {
 
   const teamMembers = [
     {
-      name: "Sarah Johnson",
-      role: "CEO & Co-founder",
-      bio: "Former VP of Customer Success with 15+ years in SaaS",
-      image: "https://via.placeholder.com/150"
-    },
-    {
-      name: "Michael Chen",
-      role: "CTO & Co-founder",
-      bio: "Full-stack engineer with expertise in gamification systems",
-      image: "https://via.placeholder.com/150"
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Head of Product",
-      bio: "Product leader focused on user engagement and retention",
-      image: "https://via.placeholder.com/150"
-    },
-    {
-      name: "David Kim",
-      role: "Head of Customer Success",
-      bio: "Passionate about helping businesses grow through reviews",
+      name: "Nick Mangubat",
+      role: "CEO & Founder",
+      bio: "Guy who builds things",
       image: "https://via.placeholder.com/150"
     }
   ]
@@ -83,12 +65,12 @@ export default function AboutPage() {
                   despite knowing how crucial they are for online reputation and growth.
                 </p>
                 <p>
-                  In 2023, our founders Sarah and Michael experienced this challenge firsthand while running their previous company. 
-                  They noticed that while their team delivered excellent service, getting customers to leave reviews was like pulling teeth. 
+                  In 2025, founder Nick Mangubat experienced this challenge firsthand while running his previous company. 
+                  He noticed that while his team delivered excellent service, getting customers to leave reviews was like pulling teeth. 
                   Even with incentives in place, employee engagement was low.
                 </p>
                 <p>
-                  That&apos;s when they had an idea: what if collecting reviews could be as engaging as playing a game? 
+                  That&apos;s when he had an idea: what if collecting reviews could be as engaging as playing a game? 
                   What if employees could compete, earn recognition, and feel genuinely motivated to ask for reviews?
                 </p>
                 <p>
