@@ -24,9 +24,11 @@ export default function Home() {
                 Get Started Today
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto px-8 py-4 text-lg font-semibold border-2 hover:bg-gray-50 transition-all duration-300">
-              View Demo
-            </Button>
+            <Link href="/pricing">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto px-8 py-4 text-lg font-semibold border-2 hover:bg-gray-50 transition-all duration-300">
+                View Pricing
+              </Button>
+            </Link>
           </div>
         </div>
 

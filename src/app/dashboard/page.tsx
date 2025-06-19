@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Leaderboard } from '@/components/Leaderboard'
 import { useAuth } from '@/hooks/useAuth'
 import { BarChart3, Trophy, TrendingUp } from 'lucide-react'
@@ -27,7 +26,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, signOut } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
     totalReviews: 0,
     totalPoints: 0,
@@ -38,8 +37,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     console.log('🏢 Dashboard useEffect triggered')
+    console.log('🔄 Auth loading:', authLoading)
     console.log('👤 Current user:', user)
     console.log('🏷️ User role:', user?.role)
+    
+    // Wait for auth to finish loading before checking user
+    if (authLoading) {
+      console.log('⏳ Auth is still loading, waiting...')
+      return
+    }
     
     if (!user) {
       console.log('❌ No user found, redirecting to login')
@@ -55,7 +61,7 @@ export default function DashboardPage() {
 
     console.log('✅ User is business_owner, loading dashboard')
     fetchDashboardStats()
-  }, [user, router])
+  }, [user, authLoading, router])
 
   const fetchDashboardStats = async () => {
     try {
@@ -71,11 +77,20 @@ export default function DashboardPage() {
     }
   }
 
-  const handleSignOut = async () => {
-    await signOut()
-    router.push('/login')
+
+  // Show loading state while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
+  // Show loading state while dashboard data is being fetched
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
@@ -93,21 +108,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <div className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-purple-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="font-serif text-3xl font-bold text-gray-900">ReviewBoost Dashboard</h1>
-              <p className="text-gray-600 mt-1">Welcome back! Here&apos;s your team&apos;s performance overview.</p>
-            </div>
-            <Button variant="outline" onClick={handleSignOut} className="px-6 py-2 border-2 hover:bg-purple-50 transition-all duration-300">
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-12">
+          <h1 className="font-serif text-4xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-2 text-lg">Welcome back! Here's your team's performance overview.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">

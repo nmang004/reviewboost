@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -43,7 +43,7 @@ const jobTypes = [
 
 export default function SubmitReviewPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -62,6 +62,23 @@ export default function SubmitReviewPage() {
   })
 
   const hasPhoto = watch('hasPhoto')
+
+  useEffect(() => {
+    // Wait for auth to finish loading before checking user
+    if (authLoading) {
+      return
+    }
+    
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    if (user.role === 'business_owner') {
+      router.push('/dashboard')
+      return
+    }
+  }, [user, authLoading, router])
 
   const onSubmit = async (data: ReviewFormData) => {
     if (!user) {
@@ -102,6 +119,18 @@ export default function SubmitReviewPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Show loading state while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
