@@ -5,104 +5,120 @@ import { Trophy, Star, Users, TrendingUp } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
-            Welcome to <span className="text-blue-600">ReviewBoost</span>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div className="text-center mb-20">
+          <h1 className="font-serif text-5xl font-bold text-gray-900 sm:text-6xl md:text-7xl lg:text-8xl leading-tight">
+            Transform Reviews into
+            <span className="block text-primary bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Growth
+            </span>
           </h1>
-          <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-            Gamify your employee review collection process and boost customer satisfaction
+          <p className="mt-8 max-w-2xl mx-auto text-xl text-gray-600 sm:text-2xl md:mt-10 leading-relaxed">
+            Gamify your employee review collection process with elegant dashboards, 
+            meaningful recognition, and data-driven insights.
           </p>
-          <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-            <div className="rounded-md shadow">
-              <Link href="/login">
-                <Button size="lg" className="w-full">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
+          <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href="/login">
+              <Button size="lg" className="w-full sm:w-auto px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+                Get Started Today
+              </Button>
+            </Link>
+            <Button variant="outline" size="lg" className="w-full sm:w-auto px-8 py-4 text-lg font-semibold border-2 hover:bg-gray-50 transition-all duration-300">
+              View Demo
+            </Button>
           </div>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader>
-              <Trophy className="h-8 w-8 text-yellow-500 mb-2" />
-              <CardTitle>Gamification</CardTitle>
+        <div className="mt-24 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-1">
+            <CardHeader className="pb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Trophy className="h-7 w-7 text-white" />
+              </div>
+              <CardTitle className="text-xl font-semibold">Gamification</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>
-                Turn review collection into a fun competition with points and leaderboards
+              <CardDescription className="text-base leading-relaxed text-gray-600">
+                Transform review collection into an engaging competition with intelligent scoring and dynamic leaderboards
               </CardDescription>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <Star className="h-8 w-8 text-blue-500 mb-2" />
-              <CardTitle>Recognition</CardTitle>
+          <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-1">
+            <CardHeader className="pb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Star className="h-7 w-7 text-white" />
+              </div>
+              <CardTitle className="text-xl font-semibold">Recognition</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>
-                Recognize top performers and celebrate their achievements
+              <CardDescription className="text-base leading-relaxed text-gray-600">
+                Celebrate achievements with meaningful recognition systems that motivate and inspire excellence
               </CardDescription>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <Users className="h-8 w-8 text-green-500 mb-2" />
-              <CardTitle>Team Building</CardTitle>
+          <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-1">
+            <CardHeader className="pb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Users className="h-7 w-7 text-white" />
+              </div>
+              <CardTitle className="text-xl font-semibold">Team Building</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>
-                Foster healthy competition and team spirit among employees
+              <CardDescription className="text-base leading-relaxed text-gray-600">
+                Build stronger teams through healthy competition and collaborative goal achievement
               </CardDescription>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <TrendingUp className="h-8 w-8 text-purple-500 mb-2" />
-              <CardTitle>Analytics</CardTitle>
+          <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-1">
+            <CardHeader className="pb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp className="h-7 w-7 text-white" />
+              </div>
+              <CardTitle className="text-xl font-semibold">Analytics</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>
-                Track performance metrics and review trends in real-time
+              <CardDescription className="text-base leading-relaxed text-gray-600">
+                Gain deep insights with comprehensive analytics and real-time performance tracking
               </CardDescription>
             </CardContent>
           </Card>
         </div>
 
-        <div className="mt-16 text-center">
-          <h2 className="text-3xl font-bold text-gray-900">How It Works</h2>
-          <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div>
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white mx-auto">
-                1
+        <div className="mt-32 text-center">
+          <h2 className="font-serif text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-16">
+            Three simple steps to transform your review collection process
+          </p>
+          <div className="mt-12 grid grid-cols-1 gap-12 md:grid-cols-3">
+            <div className="relative">
+              <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-purple-600 text-white mx-auto shadow-lg">
+                <span className="text-xl font-bold">1</span>
               </div>
-              <h3 className="mt-4 text-lg font-medium">Submit Reviews</h3>
-              <p className="mt-2 text-gray-500">
-                Employees submit customer reviews with details and earn points
+              <h3 className="mt-6 text-2xl font-semibold text-gray-900">Submit Reviews</h3>
+              <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+                Employees easily submit customer reviews with rich details and automatically earn points
               </p>
             </div>
-            <div>
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white mx-auto">
-                2
+            <div className="relative">
+              <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-purple-600 text-white mx-auto shadow-lg">
+                <span className="text-xl font-bold">2</span>
               </div>
-              <h3 className="mt-4 text-lg font-medium">Earn Points</h3>
-              <p className="mt-2 text-gray-500">
-                Get bonus points for reviews with photos and detailed feedback
+              <h3 className="mt-6 text-2xl font-semibold text-gray-900">Earn Points</h3>
+              <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+                Receive bonus points for comprehensive reviews with photos and detailed customer feedback
               </p>
             </div>
-            <div>
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600 text-white mx-auto">
-                3
+            <div className="relative">
+              <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-purple-600 text-white mx-auto shadow-lg">
+                <span className="text-xl font-bold">3</span>
               </div>
-              <h3 className="mt-4 text-lg font-medium">Win Rewards</h3>
-              <p className="mt-2 text-gray-500">
-                Top performers on the leaderboard receive recognition and rewards
+              <h3 className="mt-6 text-2xl font-semibold text-gray-900">Win Rewards</h3>
+              <p className="mt-4 text-lg text-gray-600 leading-relaxed">
+                Top performers earn recognition, rewards, and celebrate success on dynamic leaderboards
               </p>
             </div>
           </div>

@@ -85,94 +85,113 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <div className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-purple-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">ReviewBoost Dashboard</h1>
-            <Button variant="outline" onClick={handleSignOut}>
+            <div>
+              <h1 className="font-serif text-3xl font-bold text-gray-900">ReviewBoost Dashboard</h1>
+              <p className="text-gray-600 mt-1">Welcome back! Here&apos;s your team&apos;s performance overview.</p>
+            </div>
+            <Button variant="outline" onClick={handleSignOut} className="px-6 py-2 border-2 hover:bg-purple-50 transition-all duration-300">
               Sign Out
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-gray-900">Total Reviews</CardTitle>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalReviews}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-4xl font-bold text-gray-900 mb-2">{stats.totalReviews}</div>
+              <p className="text-sm text-gray-600 font-medium">
                 All-time customer reviews
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Points</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-gray-900">Total Points</CardTitle>
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalPoints}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-4xl font-bold text-gray-900 mb-2">{stats.totalPoints}</div>
+              <p className="text-sm text-gray-600 font-medium">
                 Points earned by all employees
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Top Employee</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-yellow-50 to-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-lg font-semibold text-gray-900">Top Employee</CardTitle>
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
               {stats.topEmployee ? (
                 <>
-                  <div className="text-2xl font-bold">{stats.topEmployee.name}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-gray-900 mb-2">{stats.topEmployee.name}</div>
+                  <p className="text-sm text-gray-600 font-medium">
                     {stats.topEmployee.reviews} reviews • {stats.topEmployee.points} points
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">No reviews yet</p>
+                <p className="text-lg text-gray-500 font-medium">No reviews yet</p>
               )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <Leaderboard />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Reviews</CardTitle>
-              <CardDescription>Latest customer feedback</CardDescription>
+          <Card className="border-0 shadow-xl bg-white">
+            <CardHeader className="border-b border-gray-100 pb-6">
+              <CardTitle className="text-2xl font-semibold text-gray-900">Recent Reviews</CardTitle>
+              <CardDescription className="text-lg text-gray-600">Latest customer feedback from your team</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-6">
+              <div className="space-y-6">
                 {stats.recentReviews.map((review) => (
-                  <div key={review.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{review.customer_name}</p>
-                      <p className="text-sm text-gray-500">
+                  <div key={review.id} className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-2xl hover:shadow-lg transition-all duration-300">
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold text-gray-900">{review.customer_name}</p>
+                      <p className="text-sm text-gray-600 font-medium">
                         {review.job_type} • By {review.employee_name}
                       </p>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {new Date(review.created_at).toLocaleDateString()}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500 font-medium">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
                 ))}
                 
                 {stats.recentReviews.length === 0 && (
-                  <p className="text-center text-gray-500 py-8">
-                    No reviews submitted yet
-                  </p>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BarChart3 className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 text-lg font-medium">
+                      No reviews submitted yet
+                    </p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Reviews will appear here once your team starts submitting them
+                    </p>
+                  </div>
                 )}
               </div>
             </CardContent>
