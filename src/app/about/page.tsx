@@ -65,7 +65,7 @@ export default function AboutPage() {
                   despite knowing how crucial they are for online reputation and growth.
                 </p>
                 <p>
-                  In 2025, founder Nick Mangubat experienced this challenge firsthand while running his previous company. 
+                  In 2025, founder Nick Mangubat experienced this challenge firsthand while working at his current company. 
                   He noticed that while his team delivered excellent service, getting customers to leave reviews was like pulling teeth. 
                   Even with incentives in place, employee engagement was low.
                 </p>
