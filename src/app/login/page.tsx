@@ -139,7 +139,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="text-center text-sm text-gray-600">
           <p>
-            Demo credentials: employee@demo.com / demo123 or owner@demo.com / demo123
+            Demo credentials: e@demo.com / demo123 or o@demo.com / demo123
           </p>
         </CardFooter>
       </Card>
