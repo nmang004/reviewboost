@@ -37,16 +37,23 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('🏢 Dashboard useEffect triggered')
+    console.log('👤 Current user:', user)
+    console.log('🏷️ User role:', user?.role)
+    
     if (!user) {
+      console.log('❌ No user found, redirecting to login')
       router.push('/login')
       return
     }
 
     if (user.role !== 'business_owner') {
+      console.log('🚫 User is not business_owner, redirecting to submit-review')
       router.push('/submit-review')
       return
     }
 
+    console.log('✅ User is business_owner, loading dashboard')
     fetchDashboardStats()
   }, [user, router])
 
