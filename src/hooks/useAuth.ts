@@ -49,7 +49,22 @@ export function useAuth() {
     })
     
     if (error) throw error
-    return data
+    
+    // Get user profile with role information
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+      
+      if (profile) {
+        setUser(profile)
+        return { data, error, userProfile: profile as User }
+      }
+    }
+    
+    return { data, error, userProfile: undefined }
   }
 
   async function signOut() {

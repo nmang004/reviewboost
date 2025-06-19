@@ -38,10 +38,10 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      await signIn(data.email, data.password)
+      const result = await signIn(data.email, data.password)
       
-      // Redirect based on role
-      if (role === 'business_owner') {
+      // Redirect based on actual user role from database
+      if (result.userProfile?.role === 'business_owner') {
         router.push('/dashboard')
       } else {
         router.push('/submit-review')
