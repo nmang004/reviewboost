@@ -279,7 +279,9 @@ export function validateEmail(email: string): string {
 }
 
 export function validateUUID(id: string, fieldName = 'id'): string {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  // More practical UUID validation that allows nil UUIDs and common patterns
+  // Validates basic structure: 8-4-4-4-12 hexadecimal characters
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(id)) {
     throw ApiErrorHandler.validationError(
       `Invalid ${fieldName} format`,
