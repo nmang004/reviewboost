@@ -76,6 +76,9 @@ ON CONFLICT (id) DO UPDATE SET
 -- 2. TEST FUNCTIONS
 -- ============================================================================
 
+-- Drop existing function to avoid ownership issues
+DROP FUNCTION IF EXISTS test_with_user(UUID, TEXT, TEXT);
+
 -- Function to simulate authenticated context
 CREATE OR REPLACE FUNCTION test_with_user(user_uuid UUID, test_name TEXT, query_text TEXT)
 RETURNS TABLE(test_result TEXT, row_count BIGINT, error_message TEXT) AS $$
@@ -97,7 +100,7 @@ BEGIN
   
   RETURN QUERY SELECT test_name, result_count, error_msg;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================================
 -- 3. RUN ISOLATION TESTS
