@@ -7,6 +7,7 @@ import { Leaderboard } from '@/components/Leaderboard'
 import { TeamSelector } from '@/components/TeamSelector'
 import { useAuth } from '@/hooks/useAuth'
 import { useTeam, useAuthenticatedFetch } from '@/contexts/TeamContext'
+import { AuthDiagnostics } from '@/components/debug/AuthDiagnostics'
 import { BarChart3, Trophy, TrendingUp } from 'lucide-react'
 
 interface DashboardStats {
@@ -250,6 +251,9 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+      
+      {/* Debug component - only show in development */}
+      {process.env.NODE_ENV === 'development' && <AuthDiagnostics />}
     </div>
   )
 }

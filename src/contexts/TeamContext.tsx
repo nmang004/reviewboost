@@ -240,6 +240,9 @@ export function useAuthenticatedFetch() {
       if (currentTeam && (url.includes('/api/leaderboard') || url.includes('/api/dashboard/stats'))) {
         const separator = url.includes('?') ? '&' : '?'
         finalUrl = `${url}${separator}team_id=${currentTeam.id}`
+        console.log('🔗 AuthenticatedFetch: Added team_id to URL:', finalUrl)
+      } else if (url.includes('/api/leaderboard') || url.includes('/api/dashboard/stats')) {
+        console.log('⚠️ AuthenticatedFetch: Team-scoped endpoint called without currentTeam:', url)
       }
 
       const headers = {
@@ -248,11 +251,27 @@ export function useAuthenticatedFetch() {
         'Content-Type': 'application/json',
         ...options.headers
       }
+      
+      console.log('📡 AuthenticatedFetch: Making request to:', finalUrl)
+      console.log('🔐 AuthenticatedFetch: Auth header length:', headers.Authorization.length)
+      console.log('👤 AuthenticatedFetch: Current team:', currentTeam?.name || 'none')
 
       const response = await fetch(finalUrl, {
         ...options,
         headers
       })
+      
+      console.log('📬 AuthenticatedFetch: Response status:', response.status, response.statusText)
+      
+      // Log error responses for debugging
+      if (!response.ok) {
+        try {
+          const errorText = await response.clone().text()
+          console.log('❌ AuthenticatedFetch: Error response:', errorText)
+        } catch (logError) {
+          console.log('❌ AuthenticatedFetch: Could not read error response')
+        }
+      }
 
       // Handle auth errors with retry
       if (response.status === 401 && retryCount < maxRetries) {
