@@ -121,6 +121,9 @@ export function useAuth() {
   async function signUp(email: string, password: string, name: string, role: 'employee' | 'business_owner') {
     console.log('📝 useAuth.signUp called with:', { email, name, role })
     
+    const redirectUrl = `${window.location.origin}/auth/callback`
+    console.log('🔗 Email redirect URL:', redirectUrl)
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -129,7 +132,7 @@ export function useAuth() {
           name,
           role,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        emailRedirectTo: redirectUrl
       }
     })
     
