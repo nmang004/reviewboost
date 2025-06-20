@@ -10,76 +10,76 @@ export function useAuth() {
   // Create a stable Supabase client instance
   const supabase = useMemo(() => createSupabaseBrowser(), [])
 
-  // Simplified checkUser function
-  const checkUser = useCallback(async (forceCheck = false) => {
-    if (checkingUser.current && !forceCheck) {
-      console.log('CheckUser already running, skipping...')
-      return
-    }
-    
-    checkingUser.current = true
-    console.log('CheckUser starting...')
-    
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      console.log('Auth user retrieved:', authUser?.email || 'none')
-      
-      if (authUser) {
-        // First try normal profile query
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authUser.id)
-          .single()
-        
-        if (profile) {
-          console.log('Profile found:', profile.email)
-          setUser(profile)
-        } else if (authUser.email) {
-          // Fallback to auth metadata if profile not found
-          console.log('No profile found, using fallback for:', authUser.email)
-          const fallbackProfile: User = {
-            id: authUser.id,
-            email: authUser.email,
-            name: authUser.user_metadata?.name || authUser.email.split('@')[0],
-            role: authUser.user_metadata?.role || 'employee',
-            created_at: authUser.created_at
-          }
-          setUser(fallbackProfile)
-        } else {
-          console.log('No email found, setting user to null')
-          setUser(null)
-        }
-      } else {
-        console.log('No auth user, setting user to null')
-        setUser(null)
-      }
-    } catch (error) {
-      console.error('Error checking user:', error)
-      setUser(null)
-    } finally {
-      console.log('CheckUser complete, setting loading to false')
-      setLoading(false)
-      checkingUser.current = false
-    }
-  }, [supabase])
 
   useEffect(() => {
-    // Initial user check
-    checkUser()
+    let mounted = true
     
-    // Fallback timeout to ensure loading doesn't get stuck
-    const loadingTimeout = setTimeout(() => {
-      console.log('Auth loading timeout reached, forcing loading to false')
-      setLoading(false)
-    }, 5000) // 5 second timeout
+    // Initial user check
+    const performInitialCheck = async () => {
+      if (checkingUser.current) return
+      
+      checkingUser.current = true
+      console.log('Initial auth check starting...')
+      
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        console.log('Initial auth user retrieved:', authUser?.email || 'none')
+        
+        if (!mounted) return
+        
+        if (authUser) {
+          // First try normal profile query
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', authUser.id)
+            .single()
+          
+          if (!mounted) return
+          
+          if (profile) {
+            console.log('Initial profile found:', profile.email)
+            setUser(profile)
+          } else if (authUser.email) {
+            // Fallback to auth metadata if profile not found
+            console.log('Initial fallback profile for:', authUser.email)
+            const fallbackProfile: User = {
+              id: authUser.id,
+              email: authUser.email,
+              name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+              role: authUser.user_metadata?.role || 'employee',
+              created_at: authUser.created_at
+            }
+            setUser(fallbackProfile)
+          } else {
+            setUser(null)
+          }
+        } else {
+          console.log('No initial auth user found')
+          setUser(null)
+        }
+      } catch (error) {
+        console.error('Error in initial auth check:', error)
+        if (mounted) setUser(null)
+      } finally {
+        if (mounted) {
+          console.log('Initial auth check complete, setting loading to false')
+          setLoading(false)
+        }
+        checkingUser.current = false
+      }
+    }
+
+    performInitialCheck()
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      clearTimeout(loadingTimeout) // Clear timeout if auth state changes
+      console.log('Auth state change:', event)
+      
+      if (!mounted) return
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        // Directly handle the session from the event instead of calling checkUser again
+        // Directly handle the session from the event
         if (session?.user) {
           try {
             const { data: profile } = await supabase
@@ -87,6 +87,8 @@ export function useAuth() {
               .select('*')
               .eq('id', session.user.id)
               .single()
+            
+            if (!mounted) return
             
             if (profile) {
               setUser(profile)
@@ -103,7 +105,7 @@ export function useAuth() {
             }
           } catch (error) {
             console.error('Error in auth state change:', error)
-            setUser(null)
+            if (mounted) setUser(null)
           }
         } else {
           setUser(null)
@@ -116,10 +118,10 @@ export function useAuth() {
     })
 
     return () => {
-      clearTimeout(loadingTimeout)
+      mounted = false
       subscription.unsubscribe()
     }
-  }, [supabase, checkUser])
+  }, [supabase])
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
