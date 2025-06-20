@@ -32,7 +32,10 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch user teams from API
   const fetchUserTeams = useCallback(async () => {
+    console.log('🔄 fetchUserTeams called, user:', user?.email)
+    
     if (!user) {
+      console.log('❌ No user, clearing teams')
       setUserTeams([])
       setCurrentTeam(null)
       setTeamsLoading(false)
@@ -41,15 +44,28 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setTeamsLoading(true)
+      console.log('⏳ Starting team fetch process...')
       
-      // Small delay to ensure auth session is fully established
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for auth session to be fully established with retry logic
+      let session = null
+      let retries = 0
+      const maxRetries = 10
       
-      // Get the auth token for API calls
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) {
-        throw new Error('No authentication token available')
+      console.log('🔑 Waiting for auth session...')
+      while (!session?.access_token && retries < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 500)) // Increased to 500ms
+        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        session = currentSession
+        retries++
+        console.log(`🔑 Session attempt ${retries}: ${session?.access_token ? 'SUCCESS' : 'NO TOKEN'}`)
       }
+      
+      if (!session?.access_token) {
+        console.error('❌ No authentication token available after retries')
+        throw new Error('No authentication token available after retries')
+      }
+      
+      console.log('✅ Session established, making API call...')
 
       const response = await fetch('/api/teams', {
         headers: {
@@ -58,32 +74,45 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
         }
       })
 
+      console.log('📡 API Response status:', response.status)
+
       if (!response.ok) {
+        console.error('❌ API call failed:', response.statusText)
         throw new Error(`Failed to fetch teams: ${response.statusText}`)
       }
 
       const data: TeamApiResponse = await response.json()
+      console.log('📊 Teams received:', data.teams?.length || 0, 'teams')
+      console.log('📊 Teams data:', data.teams)
+      
       setUserTeams(data.teams)
 
       // Auto-select team: prioritize stored team, fallback to first team
       if (data.teams.length > 0) {
         const storedTeamId = localStorage.getItem('currentTeamId')
+        console.log('💾 Stored team ID:', storedTeamId)
+        
         const teamToSelect = storedTeamId 
           ? data.teams.find(team => team.id === storedTeamId) || data.teams[0]
           : data.teams[0]
         
+        console.log('🎯 Selected team:', teamToSelect.name)
         setCurrentTeam(teamToSelect)
         localStorage.setItem('currentTeamId', teamToSelect.id)
       } else {
+        console.log('❌ No teams available, clearing current team')
         // Clear current team if no teams available
         setCurrentTeam(null)
         localStorage.removeItem('currentTeamId')
       }
+      
+      console.log('✅ Team fetch completed successfully')
     } catch (error) {
-      console.error('Error fetching user teams:', error)
+      console.error('❌ Error fetching user teams:', error)
       // Don't throw here to avoid breaking the app
     } finally {
       setTeamsLoading(false)
+      console.log('🏁 Teams loading finished')
     }
   }, [user])
 
@@ -114,14 +143,32 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch teams when user changes and auth is not loading
   useEffect(() => {
+    console.log('🔄 TeamContext useEffect triggered:', { 
+      authLoading, 
+      user: user?.email, 
+      userExists: !!user 
+    })
+    
     if (authLoading) {
+      console.log('⏳ Auth still loading, waiting...')
       // Still loading auth, keep teams loading state
       return
     }
     
     if (user) {
-      fetchUserTeams()
+      console.log('👤 User authenticated, scheduling team fetch in 1 second...')
+      // Add additional delay on initial load to ensure everything is ready
+      const timer = setTimeout(() => {
+        console.log('⏰ Timer triggered, calling fetchUserTeams')
+        fetchUserTeams()
+      }, 1000) // 1 second delay for initial load
+      
+      return () => {
+        console.log('🧹 Cleaning up timer')
+        clearTimeout(timer)
+      }
     } else {
+      console.log('❌ No user, clearing teams')
       setUserTeams([])
       setCurrentTeam(null)
       setTeamsLoading(false)
