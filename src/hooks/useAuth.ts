@@ -8,6 +8,8 @@ export function useAuth() {
   const checkingUser = useRef(false)
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
   const lastCheckTime = useRef<number>(0)
+  const lastSuccessfulAuth = useRef<{ user: User | null; timestamp: number }>({ user: null, timestamp: 0 })
+  const visibilityTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Debounced checkUser to prevent rapid successive calls
   const debouncedCheckUser = useCallback(() => {
@@ -18,10 +20,42 @@ export function useAuth() {
     debounceTimer.current = setTimeout(() => {
       checkUser()
     }, 250) // Increased debounce to 250ms
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Handle page visibility changes to avoid auth checks on tab switches
+  const handleVisibilityChange = useCallback(() => {
+    if (document.visibilityState === 'visible') {
+      // Only check auth if the page has been hidden for more than 5 minutes
+      // or if we don't have a recent successful auth
+      const now = Date.now()
+      const fiveMinutes = 5 * 60 * 1000
+      
+      if (now - lastSuccessfulAuth.current.timestamp > fiveMinutes) {
+        // Clear any existing timer
+        if (visibilityTimer.current) {
+          clearTimeout(visibilityTimer.current)
+        }
+        
+        // Wait a bit before checking to avoid immediate auth on tab switch
+        visibilityTimer.current = setTimeout(() => {
+          debouncedCheckUser()
+        }, 1000)
+      }
+    } else {
+      // Clear any pending auth checks when tab becomes hidden
+      if (visibilityTimer.current) {
+        clearTimeout(visibilityTimer.current)
+        visibilityTimer.current = null
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     checkUser()
+    
+    // Set up auth state listener
     const { data: listener } = supabase.auth.onAuthStateChange(async (event) => {
       // Only respond to relevant events and use debouncing
       if (event === 'SIGNED_IN') {
@@ -31,17 +65,26 @@ export function useAuth() {
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setLoading(false)
+        lastSuccessfulAuth.current = { user: null, timestamp: 0 }
       }
       // Ignore other events like INITIAL_SESSION to prevent unnecessary calls
     })
 
+    // Set up visibility change listener
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       listener?.subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current)
       }
+      if (visibilityTimer.current) {
+        clearTimeout(visibilityTimer.current)
+      }
     }
-  }, [debouncedCheckUser])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function checkUser() {
     // Prevent multiple simultaneous calls and rate limiting
@@ -49,9 +92,19 @@ export function useAuth() {
       return
     }
 
-    // Rate limiting: don't check user more than once every 500ms
     const now = Date.now()
+    
+    // Rate limiting: don't check user more than once every 500ms
     if (now - lastCheckTime.current < 500) {
+      return
+    }
+
+    // Use cached auth if it's recent (less than 30 seconds old)
+    if (now - lastSuccessfulAuth.current.timestamp < 30000) {
+      if (lastSuccessfulAuth.current.user && !user) {
+        setUser(lastSuccessfulAuth.current.user)
+        setLoading(false)
+      }
       return
     }
 
@@ -105,15 +158,20 @@ export function useAuth() {
           }
         } else if (profile) {
           setUser(profile)
+          // Cache successful auth
+          lastSuccessfulAuth.current = { user: profile, timestamp: Date.now() }
         } else {
           setUser(null)
+          lastSuccessfulAuth.current = { user: null, timestamp: Date.now() }
         }
       } else {
         setUser(null)
+        lastSuccessfulAuth.current = { user: null, timestamp: Date.now() }
       }
     } catch (error) {
       console.error('Error checking user:', error)
       setUser(null)
+      lastSuccessfulAuth.current = { user: null, timestamp: Date.now() }
     } finally {
       setLoading(false)
       checkingUser.current = false
@@ -147,6 +205,7 @@ export function useAuth() {
       
       if (profile) {
         setUser(profile)
+        lastSuccessfulAuth.current = { user: profile as User, timestamp: Date.now() }
         return { data, error, userProfile: profile as User }
       }
     }
@@ -212,6 +271,7 @@ export function useAuth() {
       
       if (profile) {
         setUser(profile)
+        lastSuccessfulAuth.current = { user: profile as User, timestamp: Date.now() }
         return { data, error, userProfile: profile as User }
       }
     }
@@ -223,6 +283,7 @@ export function useAuth() {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
     setUser(null)
+    lastSuccessfulAuth.current = { user: null, timestamp: 0 }
   }
 
   return {

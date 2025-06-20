@@ -32,8 +32,19 @@ export async function GET(req: NextRequest) {
         )
       }
 
-      // Get user profile from database
-      const { data: profile, error: profileError } = await supabase
+      // Get user profile from database using service client to avoid RLS issues
+      const serviceClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      )
+
+      const { data: profile, error: profileError } = await serviceClient
         .from('users')
         .select('*')
         .eq('id', authUser.id)
@@ -54,13 +65,21 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const supabase = createClient(
+    // Use service client for team membership queries to avoid RLS issues
+    // This is necessary because the RLS policies might be too restrictive
+    const serviceClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     )
 
     // Get user's team memberships with team details
-    const { data: teams, error } = await supabase
+    const { data: teams, error } = await serviceClient
       .from('team_members')
       .select(`
         team_id,

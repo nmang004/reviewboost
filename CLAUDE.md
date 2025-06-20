@@ -23,6 +23,7 @@ npm run check           # Run both lint and type-check
 - **Forms**: React Hook Form + Zod validation
 - **Icons**: Lucide React
 - **Deployment**: Vercel (frontend), Railway (optional backend)
+- **AI Tools**: Serena MCP for intelligent code analysis and insights
 
 ## Key File Locations
 ```
@@ -79,8 +80,37 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 - Railway for additional backend services (optional)
 - Demo users managed through Supabase Auth dashboard
 
+## AI Tools Integration
+
+### Serena MCP
+Serena MCP provides intelligent code analysis and insights for the ReviewBoost project:
+
+**Available Commands:**
+- `mcp__serena_analyze` - Analyze code structure, patterns, and potential improvements
+- `mcp__serena_suggest` - Get AI-powered suggestions for code optimization
+- `mcp__serena_review` - Perform comprehensive code review analysis
+
+**Usage Examples:**
+```bash
+# Analyze a specific component
+mcp__serena_analyze --file src/components/dashboard/LeaderboardCard.tsx
+
+# Get suggestions for improving form validation
+mcp__serena_suggest --context "React Hook Form validation patterns"
+
+# Review API route implementation
+mcp__serena_review --file src/app/api/reviews/submit/route.ts
+```
+
+**Best Practices:**
+- Use Serena for code quality insights before major refactoring
+- Leverage AI suggestions when implementing new features
+- Run code reviews on critical business logic components
+- Ask for architecture recommendations for complex features
+
 ## Recent Work
 - Fixed authentication race conditions
 - Added comprehensive debug logging
 - Updated About page with founder information
 - Resolved ESLint apostrophe escaping issues
+- Integrated Serena MCP for AI-powered code analysis
