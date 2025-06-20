@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTeam, useAuthenticatedFetch } from '@/contexts/TeamContext' 
 import { createSupabaseBrowser } from '@/lib/supabase-browser'

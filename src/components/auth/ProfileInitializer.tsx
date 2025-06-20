@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { createClient } from '@/lib/supabase'
+import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
 export default function ProfileInitializer() {
   const { user, loading } = useAuth()
@@ -14,7 +14,7 @@ export default function ProfileInitializer() {
 
       console.log('🔧 ProfileInitializer: Starting profile initialization for:', user.email)
       
-      const supabase = createClient()
+      const supabase = createSupabaseBrowser()
 
       try {
         // Check if user profile exists
@@ -33,8 +33,8 @@ export default function ProfileInitializer() {
             .insert({
               id: user.id,
               email: user.email,
-              name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-              role: user.user_metadata?.role || 'business_owner'
+              name: (user as { user_metadata?: { name?: string } }).user_metadata?.name || user.email?.split('@')[0] || 'User',
+              role: (user as { user_metadata?: { role?: string } }).user_metadata?.role || 'business_owner'
             })
 
           if (userError) {
@@ -45,7 +45,7 @@ export default function ProfileInitializer() {
         }
 
         // For business owners, ensure they have a team
-        if (user.user_metadata?.role === 'business_owner' || !user.user_metadata?.role) {
+        if ((user as { user_metadata?: { role?: string } }).user_metadata?.role === 'business_owner' || !(user as { user_metadata?: { role?: string } }).user_metadata?.role) {
           const { data: existingTeams } = await supabase
             .from('team_members')
             .select('team_id')

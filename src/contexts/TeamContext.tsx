@@ -268,7 +268,7 @@ export function useAuthenticatedFetch() {
         try {
           const errorText = await response.clone().text()
           console.log('❌ AuthenticatedFetch: Error response:', errorText)
-        } catch (logError) {
+        } catch {
           console.log('❌ AuthenticatedFetch: Could not read error response')
         }
       }
