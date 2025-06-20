@@ -30,7 +30,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [userTeams, setUserTeams] = useState<TeamWithUserRole[]>([])
   const [teamsLoading, setTeamsLoading] = useState(true)
 
-  // Fetch user teams from API
+  // Fetch user teams from API with retry logic
   const fetchUserTeams = useCallback(async () => {
     if (!user) {
       setUserTeams([])
@@ -39,59 +39,83 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    try {
-      setTeamsLoading(true)
-      
-      // Wait for auth session to be fully established with retry logic
-      let session = null
-      let retries = 0
-      const maxRetries = 10
-      
-      while (!session?.access_token && retries < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 500))
-        const { data: { session: currentSession } } = await supabase.auth.getSession()
-        session = currentSession
-        retries++
-      }
-      
-      if (!session?.access_token) {
-        throw new Error('No authentication token available after retries')
-      }
-
-      const response = await fetch('/api/teams', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch teams: ${response.statusText}`)
-      }
-
-      const data: TeamApiResponse = await response.json()
-      setUserTeams(data.teams)
-
-      // Auto-select team: prioritize stored team, fallback to first team
-      if (data.teams.length > 0) {
-        const storedTeamId = localStorage.getItem('currentTeamId')
-        const teamToSelect = storedTeamId 
-          ? data.teams.find(team => team.id === storedTeamId) || data.teams[0]
-          : data.teams[0]
+    const attemptFetch = async (attempt: number): Promise<boolean> => {
+      try {
+        console.log(`🔄 Team fetch attempt ${attempt}`)
+        setTeamsLoading(true)
         
-        setCurrentTeam(teamToSelect)
-        localStorage.setItem('currentTeamId', teamToSelect.id)
-      } else {
-        // Clear current team if no teams available
-        setCurrentTeam(null)
-        localStorage.removeItem('currentTeamId')
+        // Wait for auth session to be fully established with retry logic
+        let session = null
+        let retries = 0
+        const maxRetries = 10
+        
+        while (!session?.access_token && retries < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+          const { data: { session: currentSession } } = await supabase.auth.getSession()
+          session = currentSession
+          retries++
+        }
+        
+        if (!session?.access_token) {
+          console.error('❌ No authentication token available after retries')
+          throw new Error('No authentication token available after retries')
+        }
+
+        const response = await fetch('/api/teams', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          console.error('❌ API response failed:', response.status, response.statusText)
+          throw new Error(`Failed to fetch teams: ${response.statusText}`)
+        }
+
+        const data: TeamApiResponse = await response.json()
+        console.log('✅ Teams loaded successfully:', data.teams.length)
+        setUserTeams(data.teams)
+
+        // Auto-select team: prioritize stored team, fallback to first team
+        if (data.teams.length > 0) {
+          const storedTeamId = localStorage.getItem('currentTeamId')
+          const teamToSelect = storedTeamId 
+            ? data.teams.find(team => team.id === storedTeamId) || data.teams[0]
+            : data.teams[0]
+          
+          setCurrentTeam(teamToSelect)
+          localStorage.setItem('currentTeamId', teamToSelect.id)
+          console.log('✅ Team selected:', teamToSelect.name)
+        } else {
+          // Clear current team if no teams available
+          setCurrentTeam(null)
+          localStorage.removeItem('currentTeamId')
+          console.log('⚠️ No teams available')
+        }
+        
+        return true
+      } catch (error) {
+        console.error(`❌ Team fetch attempt ${attempt} failed:`, error)
+        return false
+      } finally {
+        setTeamsLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching user teams:', error)
-      // Don't throw here to avoid breaking the app
-    } finally {
-      setTeamsLoading(false)
     }
+
+    // Try up to 3 times with delays
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const success = await attemptFetch(attempt)
+      if (success) return
+      
+      // Wait before retry (except on last attempt)
+      if (attempt < 3) {
+        console.log(`⏳ Retrying in 2 seconds... (attempt ${attempt + 1}/3)`)
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+    }
+    
+    console.error('❌ All team fetch attempts failed')
   }, [user])
 
   // Refresh teams data
@@ -126,9 +150,11 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     }
     
     if (user) {
+      // Longer delay for post-redirect scenarios
+      // The redirect resets React state, so we need more time for session restoration
       const timer = setTimeout(() => {
         fetchUserTeams()
-      }, 1000)
+      }, 3000) // Increased to 3 seconds to match what works on refresh
       
       return () => clearTimeout(timer)
     } else {
