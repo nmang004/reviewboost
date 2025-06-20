@@ -51,11 +51,20 @@ export function useAuth() {
 
     initAuth()
     
+    // Fallback timeout to ensure loading doesn't get stuck
+    const timeout = setTimeout(() => {
+      console.log('Auth timeout reached, forcing loading to false')
+      if (mounted) setLoading(false)
+    }, 3000)
+    
     // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change event:', event, session?.user?.email)
+      
       if (!mounted) return
       
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('Processing SIGNED_IN event...')
         try {
           const { data: profile } = await supabase
             .from('users')
@@ -66,8 +75,10 @@ export function useAuth() {
           if (!mounted) return
           
           if (profile) {
+            console.log('Setting user from profile:', profile.email)
             setUser(profile)
           } else {
+            console.log('Setting fallback user for:', session.user.email)
             setUser({
               id: session.user.id,
               email: session.user.email!,
@@ -78,16 +89,30 @@ export function useAuth() {
           }
         } catch (error) {
           console.error('Sign in profile error:', error)
+          // Set fallback user even on error
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: session.user.user_metadata?.name || session.user.email!.split('@')[0],
+            role: session.user.user_metadata?.role || 'employee',
+            created_at: session.user.created_at
+          })
         }
+        console.log('Setting loading to false after SIGNED_IN')
         setLoading(false)
       } else if (event === 'SIGNED_OUT') {
+        console.log('Processing SIGNED_OUT event')
         setUser(null)
+        setLoading(false)
+      } else if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        console.log('Processing TOKEN_REFRESHED/USER_UPDATED, ensuring loading is false')
         setLoading(false)
       }
     })
 
     return () => {
       mounted = false
+      clearTimeout(timeout)
       subscription.unsubscribe()
     }
   }, []) // Empty dependency array to run only once
