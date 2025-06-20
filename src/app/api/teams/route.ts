@@ -32,19 +32,8 @@ export async function GET(req: NextRequest) {
         )
       }
 
-      // Get user profile from database using service client to avoid RLS issues
-      const serviceClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      )
-
-      const { data: profile, error: profileError } = await serviceClient
+      // Get user profile using authenticated client
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
@@ -65,21 +54,32 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Use service client for team membership queries to avoid RLS issues
-    // This is necessary because the RLS policies might be too restrictive
-    const serviceClient = createClient(
+    // Create authenticated client with the user's JWT token
+    const authorization = req.headers.get('authorization')
+    const token = authorization?.replace('Bearer ', '')
+    
+    const authenticatedClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
       }
     )
 
-    // Get user's team memberships with team details
-    const { data: teams, error } = await serviceClient
+    // Set the session for the authenticated client
+    if (token) {
+      await authenticatedClient.auth.setSession({
+        access_token: token,
+        refresh_token: '' // Not needed for this operation
+      })
+    }
+
+    // Get user's team memberships with team details using authenticated client
+    const { data: teams, error } = await authenticatedClient
       .from('team_members')
       .select(`
         team_id,
