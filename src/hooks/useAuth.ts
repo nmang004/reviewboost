@@ -77,13 +77,19 @@ export function useAuth() {
         setLoading(false)
         
         try {
-          const { data: profile } = await supabase
+          console.log('🔍 About to query profile for user:', session.user.id)
+          const { data: profile, error: profileError } = await supabase
             .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single()
           
-          if (!mounted) return
+          console.log('🔍 Profile query result:', { profile: !!profile, error: profileError?.message })
+          
+          if (!mounted) {
+            console.log('⚠️ Component unmounted, aborting user set')
+            return
+          }
           
           if (profile) {
             console.log('✅ Setting user from profile:', profile.email)
@@ -104,6 +110,12 @@ export function useAuth() {
           }
         } catch (error) {
           console.error('❌ Profile lookup error:', error)
+          
+          if (!mounted) {
+            console.log('⚠️ Component unmounted during error, aborting user set')
+            return
+          }
+          
           // Always set fallback user on error
           const fallbackUser = {
             id: session.user.id,
@@ -117,6 +129,7 @@ export function useAuth() {
           console.log('🔍 User state after error fallback set:', fallbackUser.id)
         } finally {
           processingSignIn = false
+          console.log('🏁 SIGNED_IN processing complete')
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('Processing SIGNED_OUT event')
