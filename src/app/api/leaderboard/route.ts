@@ -35,9 +35,22 @@ export async function GET(req: NextRequest) {
     }
 
     const token = authorization.replace('Bearer ', '')
+    
+    // Create Supabase client with the user's token
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        },
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      }
     )
 
     // Verify user authentication
