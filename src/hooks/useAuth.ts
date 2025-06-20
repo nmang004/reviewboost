@@ -21,7 +21,7 @@ export function useAuth() {
       
       if (authUser) {
         // First try normal profile query
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('users')
           .select('*')
           .eq('id', authUser.id)

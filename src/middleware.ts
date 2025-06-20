@@ -114,7 +114,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // For non-API routes, ensure auth state is properly maintained
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: req.headers,
     },

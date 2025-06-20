@@ -29,15 +29,9 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [currentTeam, setCurrentTeam] = useState<TeamWithUserRole | null>(null)
   const [userTeams, setUserTeams] = useState<TeamWithUserRole[]>([])
   const [teamsLoading, setTeamsLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
   
   // Create a stable Supabase client instance
   const supabase = useMemo(() => createSupabaseBrowser(), [])
-
-  // Track component mounting
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Fetch user teams from API
   const fetchUserTeams = useCallback(async () => {
