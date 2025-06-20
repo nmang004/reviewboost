@@ -88,6 +88,7 @@ export function useAuth() {
           if (profile) {
             console.log('✅ Setting user from profile:', profile.email)
             setUser(profile)
+            console.log('🔍 User state after profile set:', profile.id)
           } else {
             console.log('⚠️ No profile found, creating fallback user for:', session.user.email)
             const fallbackUser = {
@@ -99,6 +100,7 @@ export function useAuth() {
             }
             setUser(fallbackUser)
             console.log('✅ Fallback user set:', fallbackUser.email)
+            console.log('🔍 User state after fallback set:', fallbackUser.id)
           }
         } catch (error) {
           console.error('❌ Profile lookup error:', error)
@@ -112,6 +114,7 @@ export function useAuth() {
           }
           setUser(fallbackUser)
           console.log('✅ Error fallback user set:', fallbackUser.email)
+          console.log('🔍 User state after error fallback set:', fallbackUser.id)
         } finally {
           processingSignIn = false
         }
@@ -203,6 +206,11 @@ export function useAuth() {
     if (error) throw error
     setUser(null)
   }, [])
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('🎯 useAuth state changed:', { user: user?.email || 'null', loading })
+  }, [user, loading])
 
   return {
     user,
