@@ -46,8 +46,8 @@ serve(async (req) => {
 
     const { id: userId, email } = payload.record
     
-    // Extract domain from email
-    const emailDomain = email.split('@')[1]
+    // Extract domain from email (with @ prefix to match database format)
+    const emailDomain = '@' + email.split('@')[1]
     
     console.log(`Processing new user: ${email} with domain: ${emailDomain}`)
 
@@ -71,8 +71,33 @@ serve(async (req) => {
       targetTeamId = domainMapping.team_id
       console.log(`Found domain mapping. Assigning user to team: ${targetTeamId}`)
     } else {
-      // No domain mapping, assign to default team
-      targetTeamId = '00000000-0000-0000-0000-000000000001'
+      // No domain mapping, try to find a default team or create one
+      const { data: defaultTeam, error: teamError } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('name', 'Default Team')
+        .single()
+      
+      if (defaultTeam) {
+        targetTeamId = defaultTeam.id
+      } else {
+        // Create a default team if it doesn't exist
+        const { data: newTeam, error: createError } = await supabase
+          .from('teams')
+          .insert({
+            name: 'Default Team',
+            description: 'Default team for users without domain mapping'
+          })
+          .select('id')
+          .single()
+        
+        if (createError) {
+          console.error('Error creating default team:', createError)
+          throw createError
+        }
+        
+        targetTeamId = newTeam.id
+      }
       
       // If user role is business_owner, make them admin of default team
       const userMetaRole = payload.record.raw_user_meta_data?.role
@@ -80,22 +105,35 @@ serve(async (req) => {
         userRole = 'admin'
       }
       
-      console.log(`No domain mapping found. Assigning user to default team with role: ${userRole}`)
+      console.log(`No domain mapping found. Assigning user to default team ${targetTeamId} with role: ${userRole}`)
     }
 
-    // First, create the user profile (this might already be done by the trigger, but Edge Function runs separately)
-    const { error: profileError } = await supabase
+    // First, check if user profile exists or create it
+    const { data: existingUser } = await supabase
       .from('users')
-      .upsert({
-        id: userId,
-        email: email,
-        name: payload.record.raw_user_meta_data?.name || email.split('@')[0],
-        role: payload.record.raw_user_meta_data?.role || 'employee'
-      })
+      .select('id')
+      .eq('id', userId)
+      .single()
 
-    if (profileError) {
-      console.error('Error creating user profile:', profileError)
-      // Don't throw here, as the trigger might have already created the profile
+    if (!existingUser) {
+      // Create the user profile if it doesn't exist
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: email,
+          name: payload.record.raw_user_meta_data?.name || email.split('@')[0],
+          role: payload.record.raw_user_meta_data?.role || 'employee'
+        })
+
+      if (profileError) {
+        console.error('Error creating user profile:', profileError)
+        throw new Error(`Failed to create user profile: ${profileError.message}`)
+      }
+      
+      console.log(`Created user profile for ${email}`)
+    } else {
+      console.log(`User profile already exists for ${email}`)
     }
 
     // Add user to team

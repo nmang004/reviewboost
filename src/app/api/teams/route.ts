@@ -4,13 +4,54 @@ import { getUserFromHeaders, createErrorResponse, ApiError } from '@/lib/auth-ut
 
 export async function GET(req: NextRequest) {
   try {
-    // Get authenticated user from middleware headers
-    const user = getUserFromHeaders(req)
+    // Try to get user from middleware headers first
+    let user = getUserFromHeaders(req)
+    
+    // If middleware didn't set headers, try to get user from auth token directly
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+      const authorization = req.headers.get('authorization')
+      if (!authorization) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        )
+      }
+
+      const token = authorization.replace('Bearer ', '')
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
+
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
+      if (authError || !authUser) {
+        console.error('Auth error in teams API:', authError?.message)
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        )
+      }
+
+      // Get user profile from database
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
+
+      if (profileError || !profile) {
+        console.error('Profile fetch error in teams API:', profileError?.message)
+        return NextResponse.json(
+          { error: 'User profile not found' },
+          { status: 404 }
+        )
+      }
+
+      user = {
+        id: profile.id,
+        email: profile.email,
+        role: profile.role
+      }
     }
 
     const supabase = createClient(
@@ -71,13 +112,54 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Get authenticated user from middleware headers
-    const user = getUserFromHeaders(req)
+    // Try to get user from middleware headers first
+    let user = getUserFromHeaders(req)
+    
+    // If middleware didn't set headers, try to get user from auth token directly
     if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+      const authorization = req.headers.get('authorization')
+      if (!authorization) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        )
+      }
+
+      const token = authorization.replace('Bearer ', '')
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
+
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
+      if (authError || !authUser) {
+        console.error('Auth error in teams API:', authError?.message)
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        )
+      }
+
+      // Get user profile from database
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
+
+      if (profileError || !profile) {
+        console.error('Profile fetch error in teams API:', profileError?.message)
+        return NextResponse.json(
+          { error: 'User profile not found' },
+          { status: 404 }
+        )
+      }
+
+      user = {
+        id: profile.id,
+        email: profile.email,
+        role: profile.role
+      }
     }
 
     const body = await req.json()

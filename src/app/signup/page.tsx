@@ -12,16 +12,21 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 
-const loginSchema = z.object({
+const signupSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 })
 
-type LoginFormData = z.infer<typeof loginSchema>
+type SignupFormData = z.infer<typeof signupSchema>
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter()
-  const { signIn } = useAuth()
+  const { signUp } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [role, setRole] = useState<'employee' | 'business_owner'>('employee')
@@ -30,25 +35,25 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
   })
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true)
     setError(null)
 
-    console.log('🔐 Starting login attempt for:', data.email)
-    console.log('🎭 UI Role selected:', role)
+    console.log('📝 Starting signup attempt for:', data.email)
+    console.log('🎭 Role selected:', role)
 
     try {
-      console.log('📡 Calling signIn...')
-      const result = await signIn(data.email, data.password)
-      console.log('✅ SignIn result:', result)
+      console.log('📡 Calling signUp...')
+      const result = await signUp(data.email, data.password, data.name, role)
+      console.log('✅ SignUp result:', result)
       console.log('👤 User profile:', result.userProfile)
       console.log('🏷️ User role from database:', result.userProfile?.role)
       
-      // Redirect based on actual user role from database
+      // Redirect based on user role
       if (result.userProfile?.role === 'business_owner') {
         console.log('🏢 Redirecting to dashboard...')
         router.push('/dashboard')
@@ -56,9 +61,16 @@ export default function LoginPage() {
         console.log('👨‍💼 Redirecting to submit-review...')
         router.push('/submit-review')
       }
-    } catch (error) {
-      console.error('❌ Login error:', error)
-      setError('Invalid email or password')
+    } catch (error: unknown) {
+      console.error('❌ Signup error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create account'
+      if (errorMessage.includes('already registered')) {
+        setError('An account with this email already exists')
+      } else if (errorMessage.includes('email')) {
+        setError('Please enter a valid email address')
+      } else {
+        setError(errorMessage)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -69,10 +81,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Welcome to ReviewBoost
+            Join ReviewBoost
           </CardTitle>
           <CardDescription className="text-center">
-            Sign in to your account to continue
+            Create your account to start collecting reviews
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -105,6 +117,20 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Enter your full name"
+                {...register('name')}
+                disabled={isLoading}
+              />
+              {errors.name && (
+                <p className="text-sm text-red-600">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -132,6 +158,20 @@ export default function LoginPage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                {...register('confirmPassword')}
+                disabled={isLoading}
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+              )}
+            </div>
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                 {error}
@@ -143,15 +183,15 @@ export default function LoginPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : `Sign in as ${role === 'employee' ? 'Employee' : 'Business Owner'}`}
+              {isLoading ? 'Creating account...' : `Sign up as ${role === 'employee' ? 'Employee' : 'Business Owner'}`}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-center text-sm text-gray-600">
           <p>
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-primary hover:underline">
-              Sign up here
+            Already have an account?{' '}
+            <Link href="/login" className="text-primary hover:underline">
+              Sign in here
             </Link>
           </p>
           <p>
