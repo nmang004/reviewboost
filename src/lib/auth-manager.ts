@@ -14,6 +14,8 @@ class AuthManager extends EventTarget {
   private currentState: AuthState = { user: null, loading: true }
   private initialized = false
   private authSubscription: { unsubscribe: () => void } | null = null
+  private componentRefs = new WeakSet<object>()
+  private eventListeners = new Map<string, Set<EventListener>>()
 
   private constructor() {
     super()
@@ -135,6 +137,49 @@ class AuthManager extends EventTarget {
     }
   }
 
+  // Override addEventListener to track listeners properly
+  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions): void {
+    if (!listener) return
+    
+    super.addEventListener(type, listener, options)
+    
+    const listenerFn = typeof listener === 'function' ? listener : listener.handleEvent
+    if (!this.eventListeners.has(type)) {
+      this.eventListeners.set(type, new Set())
+    }
+    this.eventListeners.get(type)!.add(listenerFn)
+    
+    console.log(`🔗 AuthManager: Added event listener for ${type}. Total for ${type}: ${this.eventListeners.get(type)!.size}`)
+  }
+
+  // Override removeEventListener to properly clean up tracking
+  removeEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | EventListenerOptions): void {
+    if (!listener) return
+    
+    super.removeEventListener(type, listener, options)
+    
+    const listenerFn = typeof listener === 'function' ? listener : listener.handleEvent
+    const listeners = this.eventListeners.get(type)
+    if (listeners) {
+      listeners.delete(listenerFn)
+      console.log(`🔌 AuthManager: Removed event listener for ${type}. Remaining for ${type}: ${listeners.size}`)
+      
+      if (listeners.size === 0) {
+        this.eventListeners.delete(type)
+      }
+    }
+  }
+
+  // Subscribe with automatic cleanup tracking
+  subscribe(component: object, eventType: AuthEvent, callback: EventListener): () => void {
+    this.componentRefs.add(component)
+    this.addEventListener(eventType, callback)
+    
+    return () => {
+      this.removeEventListener(eventType, callback)
+    }
+  }
+
   // Public methods
   getState(): AuthState {
     return { ...this.currentState }
@@ -213,13 +258,56 @@ class AuthManager extends EventTarget {
     console.log('✅ AuthManager: Sign out successful')
   }
 
-  // Cleanup method for testing or app shutdown
+  // Enhanced cleanup method
   destroy() {
+    console.log('🧹 AuthManager: Starting cleanup process')
+    
+    // Clean up Supabase auth subscription
     if (this.authSubscription) {
       this.authSubscription.unsubscribe()
       this.authSubscription = null
+      console.log('🧹 AuthManager: Supabase subscription cleaned up')
     }
-    console.log('🧹 AuthManager: Cleaned up')
+    
+    // Remove all event listeners
+    for (const [eventType, listeners] of this.eventListeners) {
+      for (const listener of listeners) {
+        super.removeEventListener(eventType, listener)
+      }
+      console.log(`🧹 AuthManager: Removed ${listeners.size} listeners for ${eventType}`)
+    }
+    this.eventListeners.clear()
+    
+    // Clear component references
+    this.componentRefs = new WeakSet<object>()
+    
+    // Reset state
+    this.currentState = { user: null, loading: true }
+    this.initialized = false
+    
+    console.log('🧹 AuthManager: Cleanup completed')
+  }
+
+  // Reset singleton instance (for testing or full app reset)
+  static resetInstance() {
+    if (AuthManager.instance) {
+      AuthManager.instance.destroy()
+      AuthManager.instance = undefined as unknown as AuthManager
+      console.log('🔄 AuthManager: Instance reset')
+    }
+  }
+
+  // Check for potential memory leaks (development helper)
+  getMemoryInfo() {
+    const listenerCount = Array.from(this.eventListeners.values())
+      .reduce((total, listeners) => total + listeners.size, 0)
+    
+    return {
+      totalEventListeners: listenerCount,
+      eventTypes: Array.from(this.eventListeners.keys()),
+      hasActiveSubscription: !!this.authSubscription,
+      isInitialized: this.initialized
+    }
   }
 }
 

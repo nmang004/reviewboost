@@ -10,6 +10,9 @@ export function useAuth() {
     // Get current state
     setAuthState(authManager.getState())
     
+    // Create a component reference for tracking
+    const componentRef = {}
+    
     // Listen for auth state changes
     const handleAuthChange = (event: CustomEvent<AuthState>) => {
       console.log('📨 useAuth: Received auth state change:', {
@@ -28,17 +31,17 @@ export function useAuth() {
       console.log('📨 useAuth: Received sign-out event')
     }
     
-    // Add event listeners
-    authManager.addEventListener('auth-state-changed', handleAuthChange as EventListener)
-    authManager.addEventListener('sign-in', handleSignIn as EventListener)
-    authManager.addEventListener('sign-out', handleSignOut as EventListener)
+    // Use the improved subscription method
+    const unsubscribeAuthChange = authManager.subscribe(componentRef, 'auth-state-changed', handleAuthChange as EventListener)
+    const unsubscribeSignIn = authManager.subscribe(componentRef, 'sign-in', handleSignIn as EventListener)
+    const unsubscribeSignOut = authManager.subscribe(componentRef, 'sign-out', handleSignOut as EventListener)
     
     // Cleanup
     return () => {
       console.log('🔌 useAuth: Unsubscribing from auth manager events')
-      authManager.removeEventListener('auth-state-changed', handleAuthChange as EventListener)
-      authManager.removeEventListener('sign-in', handleSignIn as EventListener)
-      authManager.removeEventListener('sign-out', handleSignOut as EventListener)
+      unsubscribeAuthChange()
+      unsubscribeSignIn()
+      unsubscribeSignOut()
     }
   }, [])
 

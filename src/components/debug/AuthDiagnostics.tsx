@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTeam, useAuthenticatedFetch } from '@/contexts/TeamContext' 
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
+import { authManager } from '@/lib/auth-manager'
 
 export function AuthDiagnostics() {
   const { user, loading: authLoading } = useAuth()
@@ -106,6 +107,18 @@ export function AuthDiagnostics() {
       
     } catch (error) {
       addLog(`❌ Diagnostics error: ${error}`)
+    }
+    
+    // Check AuthManager memory usage
+    addLog('🧠 Checking AuthManager memory usage...')
+    const memoryInfo = authManager.getMemoryInfo()
+    addLog(`📊 Event listeners: ${memoryInfo.totalEventListeners}`)
+    addLog(`📋 Event types: ${memoryInfo.eventTypes.join(', ') || 'none'}`)
+    addLog(`🔗 Active subscription: ${memoryInfo.hasActiveSubscription ? 'Yes' : 'No'}`)
+    addLog(`🚀 Initialized: ${memoryInfo.isInitialized ? 'Yes' : 'No'}`)
+    
+    if (memoryInfo.totalEventListeners > 10) {
+      addLog('⚠️ WARNING: High number of event listeners detected - potential memory leak')
     }
     
     addLog('🏁 Diagnostics complete')

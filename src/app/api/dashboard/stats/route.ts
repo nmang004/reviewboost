@@ -1,26 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { PAGINATION_CONFIG } from '@/lib/constants'
+import { withErrorHandler, ApiErrorHandler, validateRequired, validateUUID } from '@/lib/api-error-handler'
 
-export async function GET(req: NextRequest) {
-  try {
-    // Get team_id from query parameters
-    const teamId = req.nextUrl.searchParams.get('team_id')
-    
-    if (!teamId) {
-      return NextResponse.json(
-        { error: 'team_id parameter is required' },
-        { status: 400 }
-      )
-    }
+// Define proper type for review with joined user data
+interface ReviewWithUser {
+  id: string
+  customer_name: string
+  job_type: string
+  created_at: string
+  users: {
+    name: string
+  }[]
+}
 
-    // Get and validate user authentication directly
-    const authorization = req.headers.get('authorization')
-    if (!authorization) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+export const GET = withErrorHandler(async (req: NextRequest) => {
+  // Get team_id from query parameters
+  const teamId = req.nextUrl.searchParams.get('team_id')
+  
+  validateRequired(teamId, 'team_id')
+  validateUUID(teamId!, 'team_id')
+
+  // Get and validate user authentication directly
+  const authorization = req.headers.get('authorization')
+  if (!authorization) {
+    throw ApiErrorHandler.authRequired()
+  }
 
     const token = authorization.replace('Bearer ', '')
 
@@ -41,14 +46,11 @@ export async function GET(req: NextRequest) {
       }
     )
 
-    // Verify user authentication
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !authUser) {
-      return NextResponse.json(
-        { error: 'Invalid authentication' },
-        { status: 401 }
-      )
-    }
+  // Verify user authentication
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
+  if (authError || !authUser) {
+    throw ApiErrorHandler.authInvalid()
+  }
 
     // Check team membership directly
     const { data: membership, error: membershipError } = await supabase
@@ -58,12 +60,9 @@ export async function GET(req: NextRequest) {
       .eq('team_id', teamId)
       .single()
 
-    if (membershipError || !membership) {
-      return NextResponse.json(
-        { error: 'Access denied: user not member of specified team' },
-        { status: 403 }
-      )
-    }
+  if (membershipError || !membership) {
+    throw ApiErrorHandler.teamMembershipRequired()
+  }
 
     // Use the secure team dashboard stats function from the database
     const { data: statsData, error } = await supabase
@@ -71,13 +70,10 @@ export async function GET(req: NextRequest) {
         team_uuid: teamId
       })
 
-    if (error) {
-      console.error('Error fetching team dashboard stats:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch dashboard stats' },
-        { status: 500 }
-      )
-    }
+  if (error) {
+    console.error('Error fetching team dashboard stats:', error)
+    throw ApiErrorHandler.databaseError('Failed to fetch dashboard stats', error)
+  }
 
     // Get recent reviews for the team (RLS will automatically filter by team)
     const { data: recentReviewsData } = await supabase
@@ -91,15 +87,13 @@ export async function GET(req: NextRequest) {
       `)
       .eq('team_id', teamId)
       .order('created_at', { ascending: false })
-      .limit(5)
+      .limit(PAGINATION_CONFIG.RECENT_REVIEWS_LIMIT)
 
-    const recentReviews = recentReviewsData?.map(review => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userData = (review as any).users
+    const recentReviews = recentReviewsData?.map((review: ReviewWithUser) => {
       return {
         id: review.id,
         customer_name: review.customer_name,
-        employee_name: userData.name,
+        employee_name: review.users[0]?.name || 'Unknown',
         job_type: review.job_type,
         created_at: review.created_at,
       }
@@ -123,11 +117,4 @@ export async function GET(req: NextRequest) {
 
 
     return NextResponse.json(dashboardStats)
-  } catch (error) {
-    console.error('Error in dashboard stats endpoint:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+})

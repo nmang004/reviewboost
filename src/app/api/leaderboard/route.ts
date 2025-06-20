@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { PAGINATION_CONFIG } from '@/lib/constants'
 // Removed unused auth-utils imports, using direct authentication
 
 interface LeaderboardResult {
@@ -80,7 +81,7 @@ export async function GET(req: NextRequest) {
     const { data: leaderboard, error } = await supabase
       .rpc('get_team_leaderboard', { 
         team_uuid: teamId,
-        limit_count: 10
+        limit_count: PAGINATION_CONFIG.LEADERBOARD_LIMIT
       })
 
     if (error) {

@@ -1,36 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getUserFromHeaders, createErrorResponse, ApiError } from '@/lib/auth-utils'
+import { POINTS_CONFIG, VALIDATION_CONFIG } from '@/lib/constants'
+import { getUserFromHeaders } from '@/lib/auth-utils'
+import { 
+  withErrorHandler, 
+  ApiErrorHandler, 
+  validateRequired,
+  validateUUID,
+  validateStringLength 
+} from '@/lib/api-error-handler'
 
-export async function POST(req: NextRequest) {
-  try {
-    // Get authenticated user from middleware headers
-    const user = getUserFromHeaders(req)
-    if (!user) {
-      console.error('No user found in headers for review submission')
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+export const POST = withErrorHandler(async (req: NextRequest) => {
+  // Get authenticated user from middleware headers
+  const user = getUserFromHeaders(req)
+  if (!user) {
+    throw ApiErrorHandler.authRequired('Authentication required for review submission')
+  }
 
-    const body = await req.json()
-    const { customer_name, job_type, has_photo, keywords, employee_id, team_id } = body
+  const body = await req.json()
+  const { customer_name, job_type, has_photo, keywords, employee_id, team_id } = body
 
-    // Validate required fields
-    if (!customer_name || !job_type || !keywords || !employee_id || !team_id) {
-      console.error('Missing required fields in review submission:', {
-        customer_name: !!customer_name,
-        job_type: !!job_type,
-        keywords: !!keywords,
-        employee_id: !!employee_id,
-        team_id: !!team_id
-      })
-      return NextResponse.json(
-        { error: 'Missing required fields: customer_name, job_type, keywords, employee_id, team_id' },
-        { status: 400 }
-      )
-    }
+  // Validate required fields with proper error handling
+  validateRequired(customer_name, 'customer_name')
+  validateRequired(job_type, 'job_type')
+  validateRequired(keywords, 'keywords')
+  validateRequired(employee_id, 'employee_id')
+  validateRequired(team_id, 'team_id')
+
+  // Validate field formats and lengths
+  validateUUID(employee_id, 'employee_id')
+  validateUUID(team_id, 'team_id')
+  validateStringLength(customer_name, 'customer_name', 1, VALIDATION_CONFIG.MAX_CUSTOMER_NAME_LENGTH)
+  validateStringLength(job_type, 'job_type', 1, VALIDATION_CONFIG.MAX_JOB_TYPE_LENGTH)
+  validateStringLength(keywords, 'keywords', 1, VALIDATION_CONFIG.MAX_KEYWORDS_LENGTH)
 
     // Enhanced auth validation: Get JWT token from headers and create authenticated client
     const jwtToken = req.headers.get('x-jwt-token') || req.headers.get('authorization')?.replace('Bearer ', '')
@@ -61,19 +63,13 @@ export async function POST(req: NextRequest) {
     
     if (sessionError || !currentUser) {
       console.error('Session validation failed:', sessionError?.message)
-      return NextResponse.json(
-        { error: 'Invalid or expired authentication session' },
-        { status: 401 }
-      )
+      throw ApiErrorHandler.authExpired('Invalid or expired authentication session')
     }
 
     // Ensure the session user matches the header user
     if (currentUser.id !== user.id) {
       console.error('User ID mismatch:', { headerUserId: user.id, sessionUserId: currentUser.id })
-      return NextResponse.json(
-        { error: 'Authentication state inconsistency detected' },
-        { status: 401 }
-      )
+      throw ApiErrorHandler.authInvalid('Authentication state inconsistency detected')
     }
 
     // Verify that the authenticated user is a member of the specified team
@@ -102,10 +98,7 @@ export async function POST(req: NextRequest) {
       
       console.error('User team memberships:', allMemberships)
       
-      return NextResponse.json(
-        { error: 'Access denied: user not member of specified team' },
-        { status: 403 }
-      )
+      throw ApiErrorHandler.teamMembershipRequired('Access denied: user not member of specified team')
     }
 
     console.log(`Team membership validated: user ${currentUser.id} is ${userTeamMembership.role} in team ${team_id}`)
@@ -120,10 +113,7 @@ export async function POST(req: NextRequest) {
 
     if (employeeError || !employeeTeamMembership) {
       console.error('Employee not member of team:', employeeError)
-      return NextResponse.json(
-        { error: 'Access denied: employee not member of specified team' },
-        { status: 403 }
-      )
+      throw ApiErrorHandler.resourceNotFound('employee', employee_id)
     }
 
     // Insert review with team_id for proper data isolation
@@ -142,14 +132,12 @@ export async function POST(req: NextRequest) {
 
     if (reviewError) {
       console.error('Error inserting review:', reviewError)
-      return NextResponse.json(
-        { error: 'Failed to submit review' },
-        { status: 500 }
-      )
+      throw ApiErrorHandler.databaseError('Failed to submit review', reviewError)
     }
 
-    // Calculate points (base 10 points + 5 bonus for photo)
-    const points = has_photo ? 15 : 10
+    // Calculate points using configuration constants
+    const points = POINTS_CONFIG.BASE_REVIEW_POINTS + 
+      (has_photo ? POINTS_CONFIG.PHOTO_BONUS_POINTS : 0)
 
     // Update or insert points for the employee (team-scoped)
     const { data: existingPoints } = await supabase
@@ -192,21 +180,10 @@ export async function POST(req: NextRequest) {
 
     console.log(`Review submitted successfully by user ${user.id} for employee ${employee_id} in team ${team_id}`)
 
-    return NextResponse.json({ 
-      success: true, 
-      review, 
-      points,
-      team_id 
-    })
-  } catch (error) {
-    if (error instanceof ApiError) {
-      return createErrorResponse(error)
-    }
-    
-    console.error('Error in review submission:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+  return NextResponse.json({ 
+    success: true, 
+    review, 
+    points,
+    team_id 
+  })
+})

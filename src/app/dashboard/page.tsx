@@ -1,72 +1,22 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Leaderboard } from '@/components/Leaderboard'
 import { TeamSelector } from '@/components/TeamSelector'
 import { useAuth } from '@/hooks/useAuth'
-import { useTeam, useAuthenticatedFetch } from '@/contexts/TeamContext'
+import { useDashboardStats } from '@/hooks/useDashboardStats'
+import { useTeam } from '@/contexts/TeamContext'
 import { AuthDiagnostics } from '@/components/debug/AuthDiagnostics'
 import { BarChart3, Trophy, TrendingUp } from 'lucide-react'
-
-interface DashboardStats {
-  totalReviews: number
-  totalPoints: number
-  totalMembers: number
-  topEmployee: {
-    name: string
-    reviews: number
-    points: number
-  } | null
-  recentReviews: Array<{
-    id: string
-    customer_name: string
-    employee_name: string
-    job_type: string
-    created_at: string
-  }>
-  recentReviewsCount: number
-  team_id: string
-}
 
 export default function DashboardPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { currentTeam, teamsLoading } = useTeam()
-  const authenticatedFetch = useAuthenticatedFetch()
-  const [stats, setStats] = useState<DashboardStats>({
-    totalReviews: 0,
-    totalPoints: 0,
-    totalMembers: 0,
-    topEmployee: null,
-    recentReviews: [],
-    recentReviewsCount: 0,
-    team_id: '',
-  })
-  const [loading, setLoading] = useState(true)
-
-  const fetchDashboardStats = useCallback(async () => {
-    if (!currentTeam) {
-      setLoading(false)
-      return
-    }
-
-    try {
-      const response = await authenticatedFetch('/api/dashboard/stats')
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch stats')
-      }
-      
-      const data = await response.json()
-      setStats(data)
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [currentTeam, authenticatedFetch])
+  const { stats, loading, error } = useDashboardStats()
 
   useEffect(() => {
     console.log('🏢 Dashboard useEffect triggered')
@@ -93,9 +43,8 @@ export default function DashboardPage() {
       return
     }
 
-    console.log('✅ User is business_owner, loading dashboard')
-    fetchDashboardStats()
-  }, [user, authLoading, teamsLoading, currentTeam, router, fetchDashboardStats])
+    console.log('✅ User is business_owner, dashboard ready')
+  }, [user, authLoading, teamsLoading, currentTeam, router])
 
   // Show loading state while auth and teams are being checked
   if (authLoading || teamsLoading) {
@@ -112,13 +61,82 @@ export default function DashboardPage() {
   // Show loading state while dashboard data is being fetched
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="animate-pulse space-y-8">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="mb-8">
+            <Skeleton className="h-10 w-48 mb-2" />
+            <Skeleton className="h-6 w-96" />
+          </div>
+
+          {/* Team Selector Skeleton */}
+          <div className="mb-8">
+            <Skeleton className="h-12 w-64" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className="border-0 shadow-xl bg-white">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="w-12 h-12 rounded-xl" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-10 w-16 mb-2" />
+                  <Skeleton className="h-4 w-32" />
+                </CardContent>
+              </Card>
             ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Leaderboard will show its own skeleton */}
+            <div className="h-96">
+              <Skeleton className="h-full w-full rounded-lg" />
+            </div>
+
+            {/* Recent Reviews Skeleton */}
+            <Card className="border-0 shadow-xl bg-white">
+              <CardHeader className="border-b border-gray-100 pb-6">
+                <Skeleton className="h-6 w-32 mb-2" />
+                <Skeleton className="h-4 w-48" />
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-6">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-2xl">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                      </div>
+                      <div className="text-right">
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state if there's an error loading stats
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BarChart3 className="h-8 w-8 text-red-400" />
+            </div>
+            <p className="text-red-600 text-lg font-medium">
+              Error loading dashboard
+            </p>
+            <p className="text-red-400 text-sm mt-1">
+              {error}
+            </p>
           </div>
         </div>
       </div>
