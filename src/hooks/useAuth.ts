@@ -133,7 +133,16 @@ export function useAuth() {
       }
     })
     
-    console.log('🔐 Supabase auth signup response:', { data, error })
+    console.log('🔐 Supabase auth signup response:', { 
+      user: data.user ? { 
+        id: data.user.id, 
+        email: data.user.email, 
+        email_confirmed_at: data.user.email_confirmed_at,
+        confirmation_sent_at: data.user.confirmation_sent_at 
+      } : null, 
+      session: data.session ? 'session exists' : 'no session',
+      error 
+    })
     
     if (error) {
       console.error('❌ Supabase auth signup error:', error)
@@ -143,6 +152,8 @@ export function useAuth() {
     // Check if user needs email confirmation
     if (data.user && !data.user.email_confirmed_at) {
       console.log('📧 User needs email confirmation, profile will be created after confirmation')
+      console.log('📧 Confirmation sent at:', data.user.confirmation_sent_at)
+      
       // Return success but indicate email confirmation is needed
       return { 
         data, 

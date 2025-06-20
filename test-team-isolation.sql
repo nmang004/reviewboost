@@ -56,22 +56,21 @@ INSERT INTO public.team_members (user_id, team_id, role) VALUES
 ON CONFLICT (user_id, team_id) DO UPDATE SET
   role = EXCLUDED.role;
 
--- Create test reviews for each team
-INSERT INTO public.reviews (id, customer_name, customer_email, review_text, rating, employee_id, team_id) VALUES
-  ('rev11111-1111-1111-1111-111111111111', 'Customer A1', 'cust.a1@example.com', 'Great service from Alice!', 5, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111'),
-  ('rev22222-2222-2222-2222-222222222222', 'Customer B1', 'cust.b1@example.com', 'Bob was helpful!', 4, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222')
+-- Create test reviews for each team (using correct schema)
+INSERT INTO public.reviews (id, customer_name, job_type, has_photo, keywords, employee_id, team_id) VALUES
+  ('rev11111-1111-1111-1111-111111111111', 'Customer A1', 'Consulting', true, 'excellent service professional', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111'),
+  ('rev22222-2222-2222-2222-222222222222', 'Customer B1', 'Support', false, 'helpful responsive quick', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222')
 ON CONFLICT (id) DO UPDATE SET
   customer_name = EXCLUDED.customer_name,
-  review_text = EXCLUDED.review_text,
-  rating = EXCLUDED.rating;
+  job_type = EXCLUDED.job_type,
+  keywords = EXCLUDED.keywords;
 
--- Create test points for each team
-INSERT INTO public.points (id, employee_id, points, reason, team_id) VALUES
-  ('pt111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 150, 'Great customer service', '11111111-1111-1111-1111-111111111111'),
-  ('pt222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 120, 'Helpful attitude', '22222222-2222-2222-2222-222222222222')
+-- Create test points for each team (using correct schema)
+INSERT INTO public.points (id, employee_id, points, team_id) VALUES
+  ('pt111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 150, '11111111-1111-1111-1111-111111111111'),
+  ('pt222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 120, '22222222-2222-2222-2222-222222222222')
 ON CONFLICT (id) DO UPDATE SET
-  points = EXCLUDED.points,
-  reason = EXCLUDED.reason;
+  points = EXCLUDED.points;
 
 -- ============================================================================
 -- 2. TEST FUNCTIONS
