@@ -56,19 +56,19 @@ INSERT INTO public.team_members (user_id, team_id, role) VALUES
 ON CONFLICT (user_id, team_id) DO UPDATE SET
   role = EXCLUDED.role;
 
--- Create test reviews for each team (using correct schema)
+-- Create test reviews for each team (using correct schema and valid UUIDs)
 INSERT INTO public.reviews (id, customer_name, job_type, has_photo, keywords, employee_id, team_id) VALUES
-  ('rev11111-1111-1111-1111-111111111111', 'Customer A1', 'Consulting', true, 'excellent service professional', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111'),
-  ('rev22222-2222-2222-2222-222222222222', 'Customer B1', 'Support', false, 'helpful responsive quick', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222')
+  ('12345678-1111-1111-1111-111111111111', 'Customer A1', 'Consulting', true, 'excellent service professional', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111'),
+  ('12345678-2222-2222-2222-222222222222', 'Customer B1', 'Support', false, 'helpful responsive quick', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222')
 ON CONFLICT (id) DO UPDATE SET
   customer_name = EXCLUDED.customer_name,
   job_type = EXCLUDED.job_type,
   keywords = EXCLUDED.keywords;
 
--- Create test points for each team (using correct schema)
+-- Create test points for each team (using correct schema and valid UUIDs)
 INSERT INTO public.points (id, employee_id, points, team_id) VALUES
-  ('pt111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 150, '11111111-1111-1111-1111-111111111111'),
-  ('pt222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 120, '22222222-2222-2222-2222-222222222222')
+  ('87654321-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 150, '11111111-1111-1111-1111-111111111111'),
+  ('87654321-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 120, '22222222-2222-2222-2222-222222222222')
 ON CONFLICT (id) DO UPDATE SET
   points = EXCLUDED.points;
 
@@ -248,8 +248,8 @@ END $$;
 -- Clean up test data (optional - comment out if you want to keep test data)
 /*
 -- Clean up in reverse order due to foreign key constraints
-DELETE FROM public.points WHERE id IN ('pt111111-1111-1111-1111-111111111111', 'pt222222-2222-2222-2222-222222222222');
-DELETE FROM public.reviews WHERE id IN ('rev11111-1111-1111-1111-111111111111', 'rev22222-2222-2222-2222-222222222222');
+DELETE FROM public.points WHERE id IN ('87654321-1111-1111-1111-111111111111', '87654321-2222-2222-2222-222222222222');
+DELETE FROM public.reviews WHERE id IN ('12345678-1111-1111-1111-111111111111', '12345678-2222-2222-2222-222222222222');
 DELETE FROM public.team_members WHERE team_id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
 DELETE FROM public.users WHERE id IN ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'dddddddd-dddd-dddd-dddd-dddddddddddd');
 DELETE FROM public.teams WHERE id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
