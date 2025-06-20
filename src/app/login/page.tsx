@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -21,10 +21,11 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn } = useAuth()
+  const { signIn, user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [role, setRole] = useState<'employee' | 'business_owner'>('employee')
+  const [waitingForAuth, setWaitingForAuth] = useState(false)
 
   const {
     register,
@@ -34,6 +35,22 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
+  // Monitor for user state and redirect when available
+  useEffect(() => {
+    if (waitingForAuth && user) {
+      console.log('User state available, redirecting...', user.email)
+      setWaitingForAuth(false)
+      setIsLoading(false)
+      
+      // Redirect based on user role
+      if (user.role === 'business_owner') {
+        router.push('/dashboard')
+      } else {
+        router.push('/submit-review')
+      }
+    }
+  }, [waitingForAuth, user, router])
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     setError(null)
@@ -41,20 +58,33 @@ export default function LoginPage() {
     try {
       const result = await signIn(data.email, data.password)
       
-      // Small delay to allow React state to propagate before redirect
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Redirect based on actual user role from database
-      if (result.userProfile?.role === 'business_owner') {
-        router.push('/dashboard')
+      if (result.userProfile) {
+        console.log('Sign in successful, waiting for user state...', result.userProfile.email)
+        setWaitingForAuth(true)
+        // The useEffect will handle redirect when user state is available
+        
+        // Fallback timeout in case useEffect doesn't trigger
+        setTimeout(() => {
+          if (waitingForAuth) {
+            console.log('Fallback timeout reached, redirecting anyway')
+            setWaitingForAuth(false)
+            setIsLoading(false)
+            
+            if (result.userProfile?.role === 'business_owner') {
+              router.push('/dashboard')
+            } else {
+              router.push('/submit-review')
+            }
+          }
+        }, 3000)
       } else {
-        router.push('/submit-review')
+        throw new Error('No user profile returned')
       }
     } catch (error) {
       console.error('Login error:', error)
       setError('Invalid email or password')
-    } finally {
       setIsLoading(false)
+      setWaitingForAuth(false)
     }
   }
 
@@ -137,7 +167,7 @@ export default function LoginPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : `Sign in as ${role === 'employee' ? 'Employee' : 'Business Owner'}`}
+              {isLoading ? (waitingForAuth ? 'Preparing dashboard...' : 'Signing in...') : `Sign in as ${role === 'employee' ? 'Employee' : 'Business Owner'}`}
             </Button>
           </form>
         </CardContent>
