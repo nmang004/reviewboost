@@ -13,7 +13,30 @@ ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description;
 
--- Create test users
+-- Create test users in auth.users first (bypassing foreign key constraint for testing)
+-- Note: In production, users are created through Supabase Auth signup process
+INSERT INTO auth.users (
+  id, 
+  instance_id, 
+  email, 
+  encrypted_password, 
+  email_confirmed_at, 
+  created_at, 
+  updated_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  aud,
+  role
+) VALUES
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-000000000000', 'alice@alpha.com', 'test_password', NOW(), NOW(), NOW(), '{"provider": "email", "providers": ["email"]}', '{"name": "Alice Alpha", "role": "employee"}', 'authenticated', 'authenticated'),
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '00000000-0000-0000-0000-000000000000', 'bob@beta.com', 'test_password', NOW(), NOW(), NOW(), '{"provider": "email", "providers": ["email"]}', '{"name": "Bob Beta", "role": "employee"}', 'authenticated', 'authenticated'),
+  ('cccccccc-cccc-cccc-cccc-cccccccccccc', '00000000-0000-0000-0000-000000000000', 'charlie@alpha.com', 'test_password', NOW(), NOW(), NOW(), '{"provider": "email", "providers": ["email"]}', '{"name": "Charlie Alpha", "role": "business_owner"}', 'authenticated', 'authenticated'),
+  ('dddddddd-dddd-dddd-dddd-dddddddddddd', '00000000-0000-0000-0000-000000000000', 'diana@beta.com', 'test_password', NOW(), NOW(), NOW(), '{"provider": "email", "providers": ["email"]}', '{"name": "Diana Beta", "role": "business_owner"}', 'authenticated', 'authenticated')
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  raw_user_meta_data = EXCLUDED.raw_user_meta_data;
+
+-- Create test users in public.users (this will work now that auth.users entries exist)
 INSERT INTO public.users (id, email, name, role) VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'alice@alpha.com', 'Alice Alpha', 'employee'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'bob@beta.com', 'Bob Beta', 'employee'),
@@ -225,11 +248,14 @@ END $$;
 
 -- Clean up test data (optional - comment out if you want to keep test data)
 /*
+-- Clean up in reverse order due to foreign key constraints
 DELETE FROM public.points WHERE id IN ('pt111111-1111-1111-1111-111111111111', 'pt222222-2222-2222-2222-222222222222');
 DELETE FROM public.reviews WHERE id IN ('rev11111-1111-1111-1111-111111111111', 'rev22222-2222-2222-2222-222222222222');
 DELETE FROM public.team_members WHERE team_id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
 DELETE FROM public.users WHERE id IN ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'dddddddd-dddd-dddd-dddd-dddddddddddd');
 DELETE FROM public.teams WHERE id IN ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
+-- Clean up auth.users entries (if permissions allow)
+DELETE FROM auth.users WHERE id IN ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'dddddddd-dddd-dddd-dddd-dddddddddddd');
 */
 
 -- Drop test function
