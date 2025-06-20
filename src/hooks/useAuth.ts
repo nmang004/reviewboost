@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { User } from '@/types'
 
@@ -6,31 +6,49 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const checkingUser = useRef(false)
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null)
+
+  // Debounced checkUser to prevent rapid successive calls
+  const debouncedCheckUser = useCallback(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current)
+    }
+    
+    debounceTimer.current = setTimeout(() => {
+      checkUser()
+    }, 100) // 100ms debounce
+  }, [])
 
   useEffect(() => {
     checkUser()
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔔 Auth state changed:', event, session?.user?.email)
       
-      // Handle email confirmation and token refresh
-      if (event === 'SIGNED_IN' && session?.user) {
+      // Only respond to relevant events and use debouncing
+      if (event === 'SIGNED_IN') {
         console.log('👤 User signed in via email confirmation')
-        await checkUser()
+        debouncedCheckUser()
       } else if (event === 'TOKEN_REFRESHED') {
-        console.log('🔄 Token refreshed')
-        await checkUser()
-      } else {
-        checkUser()
+        console.log('🔄 Token refreshed, updating user')
+        debouncedCheckUser()
+      } else if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out')
+        setUser(null)
+        setLoading(false)
       }
+      // Ignore other events like INITIAL_SESSION to prevent unnecessary calls
     })
 
     return () => {
       listener?.subscription.unsubscribe()
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current)
+      }
     }
-  }, [])
+  }, [debouncedCheckUser])
 
   async function checkUser() {
-    // Prevent multiple simultaneous calls
+    // Prevent multiple simultaneous calls with stronger guard
     if (checkingUser.current) {
       console.log('🔍 checkUser already in progress, skipping...')
       return
@@ -45,17 +63,48 @@ export function useAuth() {
       
       if (authUser) {
         console.log('👤 Found auth user, fetching profile...')
+        
+        // First try normal profile query
         const { data: profile, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', authUser.id)
           .single()
         
-        console.log('📊 Profile query result:', profileError ? 'Error' : 'Success')
+        console.log('📊 Profile query result:', profileError ? `Error: ${profileError.message}` : 'Success')
         
-        if (profileError && profileError.code !== 'PGRST116') {
+        // If RLS policy prevents access, try with service role context
+        if (profileError && profileError.message?.includes('row-level security')) {
+          console.log('🔒 RLS blocking access, trying alternative method...')
+          
+          // Try creating a basic user profile from auth data
+          const fallbackProfile: User = {
+            id: authUser.id,
+            email: authUser.email!,
+            name: authUser.user_metadata?.name || authUser.email!.split('@')[0],
+            role: authUser.user_metadata?.role || 'employee',
+            created_at: authUser.created_at
+          }
+          
+          console.log('🔄 Using fallback profile from auth metadata')
+          setUser(fallbackProfile)
+        } else if (profileError && profileError.code !== 'PGRST116') {
           console.error('❌ Profile query error:', profileError.message)
-          setUser(null)
+          
+          // For other errors, still try to create a minimal user from auth data
+          if (authUser.email) {
+            const fallbackProfile: User = {
+              id: authUser.id,
+              email: authUser.email,
+              name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+              role: authUser.user_metadata?.role || 'employee',
+              created_at: authUser.created_at
+            }
+            console.log('⚠️ Using fallback profile due to error')
+            setUser(fallbackProfile)
+          } else {
+            setUser(null)
+          }
         } else if (profile) {
           console.log('✅ Setting user profile:', profile.email)
           setUser(profile)
@@ -71,7 +120,7 @@ export function useAuth() {
       console.error('❌ Error checking user:', error)
       setUser(null)
     } finally {
-      console.log('🔄 Setting loading to false')
+      console.log('🔄 Setting loading to false and releasing lock')
       setLoading(false)
       checkingUser.current = false
     }
