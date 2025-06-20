@@ -54,7 +54,7 @@ export default function SignupPage() {
       console.log('✅ SignUp result:', result)
       
       // Check if email confirmation is needed
-      if ((result as any).needsEmailConfirmation) {
+      if ('needsEmailConfirmation' in result && result.needsEmailConfirmation) {
         console.log('📧 Email confirmation required')
         setSuccess('Account created successfully! Please check your email and click the confirmation link to complete your registration.')
         return
