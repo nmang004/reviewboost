@@ -67,26 +67,6 @@ export default function SubmitReviewPage() {
 
   const hasPhoto = watch('hasPhoto')
 
-  // Force auth state refresh on page load to handle post-login inconsistencies
-  useEffect(() => {
-    const refreshAuthState = async () => {
-      // Only refresh if we're on submit-review page and auth seems inconsistent
-      if (typeof window !== 'undefined' && window.location.pathname === '/submit-review') {
-        const supabase = await import('@/lib/supabase-browser').then(m => m.createSupabaseBrowser())
-        try {
-          // Force session refresh
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            console.log('Auth state refreshed on submit-review page:', session.user.email)
-          }
-        } catch (error) {
-          console.error('Failed to refresh auth state:', error)
-        }
-      }
-    }
-
-    refreshAuthState()
-  }, [])
 
   useEffect(() => {
     // Wait for auth and teams to finish loading before checking user

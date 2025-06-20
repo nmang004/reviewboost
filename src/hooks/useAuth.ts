@@ -11,8 +11,8 @@ export function useAuth() {
   const supabase = useMemo(() => createSupabaseBrowser(), [])
 
   // Simplified checkUser function
-  const checkUser = useCallback(async () => {
-    if (checkingUser.current) return
+  const checkUser = useCallback(async (forceCheck = false) => {
+    if (checkingUser.current && !forceCheck) return
     
     checkingUser.current = true
     
@@ -61,7 +61,8 @@ export function useAuth() {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        await checkUser()
+        // Force check on auth state changes to ensure loading state is properly updated
+        await checkUser(true)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setLoading(false)
