@@ -13,8 +13,6 @@ interface LeaderboardResult {
 
 export async function GET(req: NextRequest) {
   try {
-    console.log('🏆 Leaderboard API called')
-
     // Get team_id from query parameters
     const teamId = req.nextUrl.searchParams.get('team_id')
     
@@ -103,7 +101,6 @@ export async function GET(req: NextRequest) {
       rank: parseInt(item.rank.toString()),
     })) || []
 
-    console.log(`Leaderboard fetched for team ${teamId} by user ${authUser.id}`)
 
     return NextResponse.json({
       leaderboard: formattedLeaderboard,
