@@ -41,6 +41,9 @@ export default function LoginPage() {
     try {
       const result = await signIn(data.email, data.password)
       
+      // Small delay to allow React state to propagate before redirect
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       // Redirect based on actual user role from database
       if (result.userProfile?.role === 'business_owner') {
         router.push('/dashboard')

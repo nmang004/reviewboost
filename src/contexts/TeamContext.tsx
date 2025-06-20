@@ -29,14 +29,10 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [currentTeam, setCurrentTeam] = useState<TeamWithUserRole | null>(null)
   const [userTeams, setUserTeams] = useState<TeamWithUserRole[]>([])
   const [teamsLoading, setTeamsLoading] = useState(true)
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false)
 
   // Fetch user teams from API
   const fetchUserTeams = useCallback(async () => {
-    console.log('🔄 fetchUserTeams called, user:', user?.email)
-    
     if (!user) {
-      console.log('❌ No user, clearing teams')
       setUserTeams([])
       setCurrentTeam(null)
       setTeamsLoading(false)
@@ -45,28 +41,22 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setTeamsLoading(true)
-      console.log('⏳ Starting team fetch process...')
       
       // Wait for auth session to be fully established with retry logic
       let session = null
       let retries = 0
       const maxRetries = 10
       
-      console.log('🔑 Waiting for auth session...')
       while (!session?.access_token && retries < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 500)) // Increased to 500ms
+        await new Promise(resolve => setTimeout(resolve, 500))
         const { data: { session: currentSession } } = await supabase.auth.getSession()
         session = currentSession
         retries++
-        console.log(`🔑 Session attempt ${retries}: ${session?.access_token ? 'SUCCESS' : 'NO TOKEN'}`)
       }
       
       if (!session?.access_token) {
-        console.error('❌ No authentication token available after retries')
         throw new Error('No authentication token available after retries')
       }
-      
-      console.log('✅ Session established, making API call...')
 
       const response = await fetch('/api/teams', {
         headers: {
@@ -75,45 +65,32 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
         }
       })
 
-      console.log('📡 API Response status:', response.status)
-
       if (!response.ok) {
-        console.error('❌ API call failed:', response.statusText)
         throw new Error(`Failed to fetch teams: ${response.statusText}`)
       }
 
       const data: TeamApiResponse = await response.json()
-      console.log('📊 Teams received:', data.teams?.length || 0, 'teams')
-      console.log('📊 Teams data:', data.teams)
-      
       setUserTeams(data.teams)
 
       // Auto-select team: prioritize stored team, fallback to first team
       if (data.teams.length > 0) {
         const storedTeamId = localStorage.getItem('currentTeamId')
-        console.log('💾 Stored team ID:', storedTeamId)
-        
         const teamToSelect = storedTeamId 
           ? data.teams.find(team => team.id === storedTeamId) || data.teams[0]
           : data.teams[0]
         
-        console.log('🎯 Selected team:', teamToSelect.name)
         setCurrentTeam(teamToSelect)
         localStorage.setItem('currentTeamId', teamToSelect.id)
       } else {
-        console.log('❌ No teams available, clearing current team')
         // Clear current team if no teams available
         setCurrentTeam(null)
         localStorage.removeItem('currentTeamId')
       }
-      
-      console.log('✅ Team fetch completed successfully')
     } catch (error) {
-      console.error('❌ Error fetching user teams:', error)
+      console.error('Error fetching user teams:', error)
       // Don't throw here to avoid breaking the app
     } finally {
       setTeamsLoading(false)
-      console.log('🏁 Teams loading finished')
     }
   }, [user])
 
@@ -142,62 +119,25 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     return isTeamAdmin(teamId)
   }, [isTeamAdmin])
 
-  // Robust team fetching with polling approach
+  // Fetch teams when user and auth state are ready
   useEffect(() => {
-    console.log('🔄 TeamContext main effect triggered:', { 
-      authLoading, 
-      user: user?.email, 
-      userExists: !!user,
-      hasAttemptedFetch,
-      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'server'
-    })
-    
-    // Reset attempt flag when auth state changes
     if (authLoading) {
-      console.log('⏳ Auth still loading, resetting attempt flag...')
-      setHasAttemptedFetch(false)
       return
     }
     
-    if (user && !hasAttemptedFetch) {
-      console.log('👤 User authenticated, starting team fetch process...')
-      setHasAttemptedFetch(true)
+    if (user) {
+      const timer = setTimeout(() => {
+        fetchUserTeams()
+      }, 1000)
       
-      // Start the fetch process with multiple attempts
-      const attemptFetch = async () => {
-        console.log('🚀 Starting team fetch attempt...')
-        await fetchUserTeams()
-      }
-      
-      // Initial attempt after 1 second
-      const timer = setTimeout(attemptFetch, 1000)
-      
-      return () => {
-        console.log('🧹 Cleaning up timer')
-        clearTimeout(timer)
-      }
-    } else if (!authLoading && !user) {
-      console.log('❌ Auth finished but no user found, clearing teams')
+      return () => clearTimeout(timer)
+    } else {
       setUserTeams([])
       setCurrentTeam(null)
       setTeamsLoading(false)
       localStorage.removeItem('currentTeamId')
     }
-  }, [user, authLoading, hasAttemptedFetch, fetchUserTeams])
-
-  // Fallback polling mechanism
-  useEffect(() => {
-    if (!authLoading && user && userTeams.length === 0 && !teamsLoading) {
-      console.log('🔁 Fallback: User exists but no teams loaded, retrying...')
-      
-      const retryTimer = setTimeout(() => {
-        console.log('🔄 Retry timer triggered')
-        fetchUserTeams()
-      }, 2000)
-      
-      return () => clearTimeout(retryTimer)
-    }
-  }, [authLoading, user, userTeams.length, teamsLoading, fetchUserTeams])
+  }, [user, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const value: TeamContextType = {
     currentTeam,
