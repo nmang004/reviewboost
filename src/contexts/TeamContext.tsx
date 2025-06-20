@@ -39,27 +39,6 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     return () => console.log('💀 TeamProvider unmounting')
   }, [])
 
-  // Detect and handle post-login redirects
-  useEffect(() => {
-    if (!mounted) return
-    
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
-    const isPostLoginPage = ['/dashboard', '/submit-review'].includes(currentPath)
-    
-    // If we're on a post-login page and auth is complete but no teams loaded
-    if (isPostLoginPage && !authLoading && user && userTeams.length === 0) {
-      console.log('🚀 Post-login redirect detected, forcing immediate team fetch')
-      
-      // Force immediate team fetch for post-login scenarios
-      const immediateTimer = setTimeout(() => {
-        console.log('🚀 Immediate timer triggered for post-login')
-        fetchUserTeams()
-      }, 500) // Short delay to ensure session is ready
-      
-      return () => clearTimeout(immediateTimer)
-    }
-  }, [mounted, authLoading, user, userTeams.length, fetchUserTeams]) // Added fetchUserTeams
-
   // Fetch user teams from API with retry logic
   const fetchUserTeams = useCallback(async () => {
     if (!user) {
@@ -147,6 +126,27 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     
     console.error('❌ All team fetch attempts failed')
   }, [user])
+
+  // Detect and handle post-login redirects
+  useEffect(() => {
+    if (!mounted) return
+    
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+    const isPostLoginPage = ['/dashboard', '/submit-review'].includes(currentPath)
+    
+    // If we're on a post-login page and auth is complete but no teams loaded
+    if (isPostLoginPage && !authLoading && user && userTeams.length === 0) {
+      console.log('🚀 Post-login redirect detected, forcing immediate team fetch')
+      
+      // Force immediate team fetch for post-login scenarios
+      const immediateTimer = setTimeout(() => {
+        console.log('🚀 Immediate timer triggered for post-login')
+        fetchUserTeams()
+      }, 500) // Short delay to ensure session is ready
+      
+      return () => clearTimeout(immediateTimer)
+    }
+  }, [mounted, authLoading, user, userTeams.length, fetchUserTeams])
 
   // Refresh teams data
   const refreshTeams = useCallback(async () => {
