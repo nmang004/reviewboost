@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 export async function middleware(req: NextRequest) {
   // Check if this is an API route that needs authentication
   if (req.nextUrl.pathname.startsWith('/api/')) {
-    // Skip authentication for certain public endpoints if needed
+    // Skip authentication for certain public endpoints
     const publicEndpoints = [
       '/api/health',
       '/api/ping'
@@ -17,6 +17,17 @@ export async function middleware(req: NextRequest) {
     
     if (!isPublicEndpoint) {
       try {
+        // Check if this is a service-level operation
+        const serviceEndpoints = [
+          '/api/reviews/submit',
+          '/api/dashboard/stats',
+          '/api/leaderboard'
+        ]
+        
+        const isServiceEndpoint = serviceEndpoints.some(endpoint => 
+          req.nextUrl.pathname.startsWith(endpoint)
+        )
+
         // Get the authorization header
         const authorization = req.headers.get('authorization')
         if (!authorization) {
@@ -55,6 +66,14 @@ export async function middleware(req: NextRequest) {
         // Add user role if available from user metadata
         const userRole = user.user_metadata?.role || 'employee'
         requestHeaders.set('x-user-role', userRole)
+
+        // Mark service endpoints for enhanced permissions
+        if (isServiceEndpoint) {
+          requestHeaders.set('x-service-operation', 'true')
+        }
+
+        // Add JWT token for service operations
+        requestHeaders.set('x-jwt-token', token)
 
         return NextResponse.next({
           request: {

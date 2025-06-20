@@ -9,9 +9,19 @@ export function useAuth() {
 
   useEffect(() => {
     checkUser()
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔔 Auth state changed:', event, session?.user?.email)
-      checkUser()
+      
+      // Handle email confirmation and token refresh
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('👤 User signed in via email confirmation')
+        await checkUser()
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('🔄 Token refreshed')
+        await checkUser()
+      } else {
+        checkUser()
+      }
     })
 
     return () => {
@@ -43,14 +53,14 @@ export function useAuth() {
         
         console.log('📊 Profile query result:', profileError ? 'Error' : 'Success')
         
-        if (profileError) {
+        if (profileError && profileError.code !== 'PGRST116') {
           console.error('❌ Profile query error:', profileError.message)
           setUser(null)
         } else if (profile) {
           console.log('✅ Setting user profile:', profile.email)
           setUser(profile)
         } else {
-          console.log('⚠️ No profile found, setting user to null')
+          console.log('⚠️ No profile found - user may need profile creation from trigger')
           setUser(null)
         }
       } else {

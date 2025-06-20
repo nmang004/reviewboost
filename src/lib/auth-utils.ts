@@ -190,3 +190,70 @@ export function extractTeamId(request: NextRequest, body?: Record<string, unknow
 
   return null
 }
+
+/**
+ * Create a Supabase client configured for service-level operations
+ * This bypasses RLS policies for system operations
+ */
+export function createServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
+/**
+ * Check if the current operation should be treated as a service-level operation
+ * Service operations can bypass certain RLS restrictions
+ */
+export function isServiceOperation(request: NextRequest): boolean {
+  // Check for service operation header (set by internal API calls)
+  const serviceOp = request.headers.get('x-service-operation')
+  if (serviceOp === 'true') {
+    return true
+  }
+
+  // Check for specific API endpoints that require service-level access
+  const serviceEndpoints = [
+    '/api/reviews/submit',
+    '/api/dashboard/stats',
+    '/api/leaderboard'
+  ]
+
+  return serviceEndpoints.some(endpoint => 
+    request.nextUrl.pathname.startsWith(endpoint)
+  )
+}
+
+/**
+ * Enhanced authentication context with service operation support
+ */
+export interface EnhancedAuthContext extends AuthContext {
+  isServiceOperation: boolean
+  serviceClient?: ReturnType<typeof createServiceClient>
+}
+
+/**
+ * Get enhanced authentication context with service operation support
+ */
+export async function getEnhancedAuthContext(request: NextRequest): Promise<EnhancedAuthContext | null> {
+  const isService = isServiceOperation(request)
+  const baseContext = await getAuthContext(request)
+  
+  if (!baseContext && !isService) {
+    return null
+  }
+
+  return {
+    user: baseContext?.user || { id: 'service', email: 'service@system', role: 'service' },
+    teams: baseContext?.teams || [],
+    isServiceOperation: isService,
+    serviceClient: isService ? createServiceClient() : undefined
+  }
+}
