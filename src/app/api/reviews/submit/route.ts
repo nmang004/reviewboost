@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
     // Get authenticated user from middleware headers
     const user = getUserFromHeaders(req)
     if (!user) {
+      console.error('No user found in headers for review submission')
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -18,32 +19,96 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields
     if (!customer_name || !job_type || !keywords || !employee_id || !team_id) {
+      console.error('Missing required fields in review submission:', {
+        customer_name: !!customer_name,
+        job_type: !!job_type,
+        keywords: !!keywords,
+        employee_id: !!employee_id,
+        team_id: !!team_id
+      })
       return NextResponse.json(
         { error: 'Missing required fields: customer_name, job_type, keywords, employee_id, team_id' },
         { status: 400 }
       )
     }
 
+    // Enhanced auth validation: Get JWT token from headers and create authenticated client
+    const jwtToken = req.headers.get('x-jwt-token') || req.headers.get('authorization')?.replace('Bearer ', '')
+    
+    if (!jwtToken) {
+      console.error('No JWT token found for authenticated request')
+      return NextResponse.json(
+        { error: 'Invalid authentication token' },
+        { status: 401 }
+      )
+    }
+
+    // Create Supabase client with user's JWT token for proper RLS
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${jwtToken}`
+          }
+        }
+      }
     )
 
+    // Verify current session first to ensure auth state is valid
+    const { data: { user: currentUser }, error: sessionError } = await supabase.auth.getUser(jwtToken)
+    
+    if (sessionError || !currentUser) {
+      console.error('Session validation failed:', sessionError?.message)
+      return NextResponse.json(
+        { error: 'Invalid or expired authentication session' },
+        { status: 401 }
+      )
+    }
+
+    // Ensure the session user matches the header user
+    if (currentUser.id !== user.id) {
+      console.error('User ID mismatch:', { headerUserId: user.id, sessionUserId: currentUser.id })
+      return NextResponse.json(
+        { error: 'Authentication state inconsistency detected' },
+        { status: 401 }
+      )
+    }
+
     // Verify that the authenticated user is a member of the specified team
+    console.log(`Checking team membership for user ${currentUser.id} in team ${team_id}`)
+    
     const { data: userTeamMembership, error: membershipError } = await supabase
       .from('team_members')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('user_id', currentUser.id)
       .eq('team_id', team_id)
       .single()
 
     if (membershipError || !userTeamMembership) {
-      console.error('User not member of team:', membershipError)
+      console.error('Team membership validation failed:', {
+        userId: currentUser.id,
+        teamId: team_id,
+        error: membershipError?.message,
+        code: membershipError?.code
+      })
+
+      // Additional debugging: Check if user has any team memberships
+      const { data: allMemberships } = await supabase
+        .from('team_members')
+        .select('team_id, role')
+        .eq('user_id', currentUser.id)
+      
+      console.error('User team memberships:', allMemberships)
+      
       return NextResponse.json(
         { error: 'Access denied: user not member of specified team' },
         { status: 403 }
       )
     }
+
+    console.log(`Team membership validated: user ${currentUser.id} is ${userTeamMembership.role} in team ${team_id}`)
 
     // Verify that the employee_id belongs to the same team
     const { data: employeeTeamMembership, error: employeeError } = await supabase

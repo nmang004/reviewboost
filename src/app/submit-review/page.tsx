@@ -67,6 +67,27 @@ export default function SubmitReviewPage() {
 
   const hasPhoto = watch('hasPhoto')
 
+  // Force auth state refresh on page load to handle post-login inconsistencies
+  useEffect(() => {
+    const refreshAuthState = async () => {
+      // Only refresh if we're on submit-review page and auth seems inconsistent
+      if (typeof window !== 'undefined' && window.location.pathname === '/submit-review') {
+        const supabase = await import('@/lib/supabase-browser').then(m => m.createSupabaseBrowser())
+        try {
+          // Force session refresh
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            console.log('Auth state refreshed on submit-review page:', session.user.email)
+          }
+        } catch (error) {
+          console.error('Failed to refresh auth state:', error)
+        }
+      }
+    }
+
+    refreshAuthState()
+  }, [])
+
   useEffect(() => {
     // Wait for auth and teams to finish loading before checking user
     if (authLoading || teamsLoading) {
@@ -74,26 +95,47 @@ export default function SubmitReviewPage() {
     }
     
     if (!user) {
+      console.log('No user found on submit-review page, redirecting to login')
       router.push('/login')
       return
     }
 
     if (user.role === 'business_owner') {
+      console.log('Business owner redirected to dashboard')
       router.push('/dashboard')
       return
     }
-  }, [user, authLoading, teamsLoading, router])
+
+    // Log successful auth state for debugging
+    console.log('Submit-review page auth state:', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      teamsLoaded: !teamsLoading,
+      currentTeam: currentTeam?.name
+    })
+  }, [user, authLoading, teamsLoading, router, currentTeam])
 
   const onSubmit = async (data: ReviewFormData) => {
     if (!user) {
+      console.error('No user available for review submission')
       router.push('/login')
       return
     }
 
     if (!currentTeam) {
+      console.error('No team selected for review submission')
       alert('Please select a team before submitting a review.')
       return
     }
+
+    console.log('Submitting review with:', {
+      userId: user.id,
+      teamId: currentTeam.id,
+      teamName: currentTeam.name,
+      customerName: data.customerName,
+      jobType: data.jobType
+    })
 
     setIsLoading(true)
     try {
@@ -111,9 +153,24 @@ export default function SubmitReviewPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('Review submission failed:', {
+          status: response.status,
+          error: errorData.error,
+          userId: user.id,
+          teamId: currentTeam.id
+        })
+        
+        // Handle specific team membership error with helpful message
+        if (errorData.error?.includes('not member of specified team')) {
+          throw new Error(`Team membership issue detected. Please refresh the page and try again. If the problem persists, you may need to be re-added to the team.`)
+        }
+        
         throw new Error(errorData.error || 'Failed to submit review')
       }
 
+      const result = await response.json()
+      console.log('Review submitted successfully:', result)
+      
       setSuccess(true)
       reset()
       
@@ -123,7 +180,8 @@ export default function SubmitReviewPage() {
       }, 3000)
     } catch (error) {
       console.error('Error submitting review:', error)
-      alert(`Failed to submit review: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Failed to submit review: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
