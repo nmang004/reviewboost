@@ -25,7 +25,7 @@ interface TeamContextType {
 const TeamContext = createContext<TeamContextType | undefined>(undefined)
 
 export function TeamProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [currentTeam, setCurrentTeam] = useState<TeamWithUserRole | null>(null)
   const [userTeams, setUserTeams] = useState<TeamWithUserRole[]>([])
   const [teamsLoading, setTeamsLoading] = useState(true)
@@ -41,6 +41,9 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setTeamsLoading(true)
+      
+      // Small delay to ensure auth session is fully established
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       // Get the auth token for API calls
       const { data: { session } } = await supabase.auth.getSession()
@@ -62,8 +65,8 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
       const data: TeamApiResponse = await response.json()
       setUserTeams(data.teams)
 
-      // Auto-select the first team if no current team is selected
-      if (data.teams.length > 0 && !currentTeam) {
+      // Auto-select team: prioritize stored team, fallback to first team
+      if (data.teams.length > 0) {
         const storedTeamId = localStorage.getItem('currentTeamId')
         const teamToSelect = storedTeamId 
           ? data.teams.find(team => team.id === storedTeamId) || data.teams[0]
@@ -71,6 +74,10 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
         
         setCurrentTeam(teamToSelect)
         localStorage.setItem('currentTeamId', teamToSelect.id)
+      } else {
+        // Clear current team if no teams available
+        setCurrentTeam(null)
+        localStorage.removeItem('currentTeamId')
       }
     } catch (error) {
       console.error('Error fetching user teams:', error)
@@ -78,7 +85,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setTeamsLoading(false)
     }
-  }, [user, currentTeam])
+  }, [user])
 
   // Refresh teams data
   const refreshTeams = useCallback(async () => {
@@ -105,8 +112,13 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     return isTeamAdmin(teamId)
   }, [isTeamAdmin])
 
-  // Fetch teams when user changes
+  // Fetch teams when user changes and auth is not loading
   useEffect(() => {
+    if (authLoading) {
+      // Still loading auth, keep teams loading state
+      return
+    }
+    
     if (user) {
       fetchUserTeams()
     } else {
@@ -115,12 +127,12 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
       setTeamsLoading(false)
       localStorage.removeItem('currentTeamId')
     }
-  }, [user, fetchUserTeams])
+  }, [user, authLoading, fetchUserTeams])
 
   const value: TeamContextType = {
     currentTeam,
     userTeams,
-    teamsLoading,
+    teamsLoading: authLoading || teamsLoading,
     selectTeam,
     refreshTeams,
     isTeamAdmin,
