@@ -12,10 +12,17 @@ export default function Home() {
 
   useEffect(() => {
     // Check if this is an auth callback (has auth tokens in URL)
+    console.log('🏠 Homepage loaded, checking for auth tokens...')
+    console.log('🔗 Current URL hash:', window.location.hash)
+    
     if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
       console.log('🔀 Auth callback detected on homepage, redirecting to /auth/callback')
       // Redirect to the proper auth callback page with the tokens
-      router.replace(`/auth/callback${window.location.hash}`)
+      const callbackUrl = `/auth/callback${window.location.hash}`
+      console.log('🎯 Redirecting to:', callbackUrl)
+      router.replace(callbackUrl)
+    } else {
+      console.log('📄 No auth tokens found, showing normal homepage')
     }
   }, [router])
   return (
