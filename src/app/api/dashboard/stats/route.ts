@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getUserFromHeaders, validateTeamMembership } from '@/lib/auth-utils'
+// Removed unused auth-utils imports, using direct authentication
 
 export async function GET(req: NextRequest) {
   try {
-    // Get authenticated user from middleware headers
-    const user = getUserFromHeaders(req)
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+    console.log('📊 Dashboard stats API called')
 
     // Get team_id from query parameters
     const teamId = req.nextUrl.searchParams.get('team_id')
@@ -23,19 +16,48 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Validate team membership
-    const validation = await validateTeamMembership(req, teamId)
-    if (!validation.isValid) {
+    // Get and validate user authentication directly
+    const authorization = req.headers.get('authorization')
+    if (!authorization) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const token = authorization.replace('Bearer ', '')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    // Verify user authentication
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !authUser) {
+      console.error('Dashboard API auth error:', authError?.message)
+      return NextResponse.json(
+        { error: 'Invalid authentication' },
+        { status: 401 }
+      )
+    }
+
+    // Check team membership directly
+    const { data: membership, error: membershipError } = await supabase
+      .from('team_members')
+      .select('role')
+      .eq('user_id', authUser.id)
+      .eq('team_id', teamId)
+      .single()
+
+    if (membershipError || !membership) {
+      console.error('Team membership check failed:', membershipError?.message)
       return NextResponse.json(
         { error: 'Access denied: user not member of specified team' },
         { status: 403 }
       )
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    console.log('✅ Dashboard API: User has valid team membership:', membership.role)
 
     // Use the secure team dashboard stats function from the database
     const { data: statsData, error } = await supabase
@@ -93,7 +115,7 @@ export async function GET(req: NextRequest) {
       team_id: teamId
     }
 
-    console.log(`Dashboard stats fetched for team ${teamId} by user ${user.id}`)
+    console.log(`Dashboard stats fetched for team ${teamId} by user ${authUser.id}`)
 
     return NextResponse.json(dashboardStats)
   } catch (error) {
