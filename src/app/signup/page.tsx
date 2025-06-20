@@ -45,37 +45,26 @@ export default function SignupPage() {
     setError(null)
     setSuccess(null)
 
-    console.log('📝 Starting signup attempt for:', data.email)
-    console.log('🎭 Role selected:', role)
-
     try {
-      console.log('📡 Calling signUp...')
       const result = await signUp(data.email, data.password, data.name, role)
-      console.log('✅ SignUp result:', result)
       
       // Check if email confirmation is needed
       if ('needsEmailConfirmation' in result && result.needsEmailConfirmation) {
-        console.log('📧 Email confirmation required')
         setSuccess('Account created successfully! Please check your email and click the confirmation link to complete your registration.')
         return
       }
       
-      console.log('👤 User profile:', result.userProfile)
-      console.log('🏷️ User role from database:', result.userProfile?.role)
-      
       // Redirect based on user role if profile was created
       if (result.userProfile?.role === 'business_owner') {
-        console.log('🏢 Redirecting to dashboard...')
         router.push('/dashboard')
       } else if (result.userProfile?.role === 'employee') {
-        console.log('👨‍💼 Redirecting to submit-review...')
         router.push('/submit-review')
       } else {
         // Profile wasn't created but auth user exists - show success message
         setSuccess('Account created successfully! Please check your email and click the confirmation link to complete your registration.')
       }
     } catch (error: unknown) {
-      console.error('❌ Signup error:', error)
+      console.error('Signup error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to create account'
       if (errorMessage.includes('already registered') || errorMessage.includes('User already registered')) {
         setError('An account with this email already exists')

@@ -38,26 +38,17 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
 
-    console.log('🔐 Starting login attempt for:', data.email)
-    console.log('🎭 UI Role selected:', role)
-
     try {
-      console.log('📡 Calling signIn...')
       const result = await signIn(data.email, data.password)
-      console.log('✅ SignIn result:', result)
-      console.log('👤 User profile:', result.userProfile)
-      console.log('🏷️ User role from database:', result.userProfile?.role)
       
       // Redirect based on actual user role from database
       if (result.userProfile?.role === 'business_owner') {
-        console.log('🏢 Redirecting to dashboard...')
         router.push('/dashboard')
       } else {
-        console.log('👨‍💼 Redirecting to submit-review...')
         router.push('/submit-review')
       }
     } catch (error) {
-      console.error('❌ Login error:', error)
+      console.error('Login error:', error)
       setError('Invalid email or password')
     } finally {
       setIsLoading(false)
