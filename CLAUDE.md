@@ -119,6 +119,60 @@ Context7 MCP provides up-to-date, version-specific documentation and code exampl
 **Usage:**
 Context7 works automatically through MCP tools when Claude Code needs current documentation. No special commands required - it provides enhanced, up-to-date information for all coding tasks.
 
+### GitHub MCP
+GitHub MCP enables direct repository management and GitHub API integration:
+
+**Key Features:**
+- Repository management and file operations
+- Issue and pull request handling
+- GitHub API integration with proper authentication
+- Direct code collaboration workflows
+
+**Usage:**
+GitHub MCP works through MCP tools to provide seamless GitHub integration for repository operations, issue management, and code collaboration.
+
+### Memory MCP
+Memory MCP provides knowledge graph-based persistent memory across sessions:
+
+**Key Features:**
+- Persistent memory system using knowledge graphs
+- Cross-session context retention
+- Intelligent information storage and retrieval
+- Enhanced continuity for complex projects
+
+**Usage:**
+Memory MCP automatically maintains context and knowledge across different Claude Code sessions, improving workflow continuity.
+
+### Microsoft Playwright MCP
+Microsoft Playwright MCP enables browser automation and testing capabilities:
+
+**Key Features:**
+- Multi-browser support (Chrome, Firefox, WebKit, Edge)
+- Headless and headed browser modes
+- Web scraping and automated testing
+- Screenshot and PDF generation capabilities
+
+**Available Options:**
+- Multiple browser engines and device emulation
+- Network request blocking/allowing
+- Storage state management
+- Trace saving for debugging
+
+**Usage:**
+Playwright MCP provides browser automation tools for testing, scraping, and web interaction tasks through the MCP protocol.
+
+### Sentry Remote MCP
+Sentry Remote MCP provides error tracking and performance monitoring integration:
+
+**Key Features:**
+- Access to Sentry error reports and issues
+- Performance monitoring data
+- Stacktrace analysis and debugging information
+- OAuth authentication with Sentry
+
+**Usage:**
+Sentry Remote MCP connects to Sentry's hosted MCP server to provide error tracking and performance monitoring capabilities through secure OAuth authentication.
+
 **Best Practices:**
 - Use Serena for code quality insights before major refactoring
 - Leverage AI suggestions when implementing new features

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -41,10 +41,29 @@ export async function middleware(req: NextRequest) {
         // Extract the JWT token
         const token = authorization.replace('Bearer ', '')
         
-        // Create Supabase client for server-side validation
-        const supabase = createClient(
+        // Create a response object that we'll modify
+        let response = NextResponse.next({
+          request: {
+            headers: req.headers,
+          },
+        })
+        
+        // Create Supabase client for server-side validation with cookie handling
+        const supabase = createServerClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              getAll() {
+                return req.cookies.getAll()
+              },
+              setAll(cookiesToSet) {
+                cookiesToSet.forEach(({ name, value, options }) =>
+                  response.cookies.set(name, value, options)
+                )
+              },
+            },
+          }
         )
 
         // Verify the JWT token
@@ -75,11 +94,15 @@ export async function middleware(req: NextRequest) {
         // Add JWT token for service operations
         requestHeaders.set('x-jwt-token', token)
 
-        return NextResponse.next({
+        // Update response with modified headers
+        response = NextResponse.next({
           request: {
             headers: requestHeaders,
           },
         })
+        
+        // Copy over any cookies that were set by Supabase
+        return response
       } catch (error) {
         console.error('Middleware error:', error)
         return NextResponse.json(
@@ -90,8 +113,35 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // For non-API routes, continue with normal flow
-  return NextResponse.next()
+  // For non-API routes, ensure auth state is properly maintained
+  let response = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  })
+
+  // Create Supabase client to handle auth refresh for regular pages
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  // This will refresh the auth token if needed and update cookies
+  await supabase.auth.getUser()
+
+  return response
 }
 
 export const config = {

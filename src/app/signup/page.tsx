@@ -54,15 +54,9 @@ export default function SignupPage() {
         return
       }
       
-      // Redirect based on user role if profile was created
-      if (result.userProfile?.role === 'business_owner') {
-        router.push('/dashboard')
-      } else if (result.userProfile?.role === 'employee') {
-        router.push('/submit-review')
-      } else {
-        // Profile wasn't created but auth user exists - show success message
-        setSuccess('Account created successfully! Please check your email and click the confirmation link to complete your registration.')
-      }
+      // If we get here, user was created successfully
+      // Show success message - they'll be redirected after email confirmation
+      setSuccess('Account created successfully! Please check your email and click the confirmation link to complete your registration.')
     } catch (error: unknown) {
       console.error('Signup error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to create account'
