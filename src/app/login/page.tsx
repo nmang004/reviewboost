@@ -38,16 +38,22 @@ export default function LoginPage() {
   // Monitor for user state and redirect when available
   useEffect(() => {
     if (waitingForAuth && user) {
-      console.log('User state available, redirecting...', user.email)
-      setWaitingForAuth(false)
-      setIsLoading(false)
+      console.log('User state available, waiting before redirect...', user.email)
       
-      // Redirect based on user role
-      if (user.role === 'business_owner') {
-        router.push('/dashboard')
-      } else {
-        router.push('/submit-review')
-      }
+      // Wait 2 seconds before redirecting to give the new TeamProvider instance time to initialize
+      // This ensures the post-login detection will have user state available
+      setTimeout(() => {
+        console.log('Redirect delay complete, redirecting now...', user.email)
+        setWaitingForAuth(false)
+        setIsLoading(false)
+        
+        // Redirect based on user role
+        if (user.role === 'business_owner') {
+          router.push('/dashboard')
+        } else {
+          router.push('/submit-review')
+        }
+      }, 2000) // 2 second delay
     }
   }, [waitingForAuth, user, router])
 
@@ -76,7 +82,7 @@ export default function LoginPage() {
               router.push('/submit-review')
             }
           }
-        }, 3000)
+        }, 5000) // Increase fallback to 5 seconds
       } else {
         throw new Error('No user profile returned')
       }
@@ -167,7 +173,7 @@ export default function LoginPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? (waitingForAuth ? 'Preparing dashboard...' : 'Signing in...') : `Sign in as ${role === 'employee' ? 'Employee' : 'Business Owner'}`}
+              {isLoading ? (waitingForAuth ? 'Preparing dashboard... (2 seconds)' : 'Signing in...') : `Sign in as ${role === 'employee' ? 'Employee' : 'Business Owner'}`}
             </Button>
           </form>
         </CardContent>
