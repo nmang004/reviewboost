@@ -9,6 +9,7 @@ export function useAuth() {
   useEffect(() => {
     const supabase = createSupabaseBrowser()
     let mounted = true
+    let processingSignIn = false
     
     // Simple initial check
     const initAuth = async () => {
@@ -64,7 +65,17 @@ export function useAuth() {
       if (!mounted) return
       
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('Processing SIGNED_IN event...')
+        if (processingSignIn) {
+          console.log('⏭️ Skipping duplicate SIGNED_IN event')
+          return
+        }
+        
+        processingSignIn = true
+        console.log('🔄 Processing SIGNED_IN event for:', session.user.email)
+        
+        // Always set loading to false first to prevent infinite loops
+        setLoading(false)
+        
         try {
           const { data: profile } = await supabase
             .from('users')
@@ -75,31 +86,35 @@ export function useAuth() {
           if (!mounted) return
           
           if (profile) {
-            console.log('Setting user from profile:', profile.email)
+            console.log('✅ Setting user from profile:', profile.email)
             setUser(profile)
           } else {
-            console.log('Setting fallback user for:', session.user.email)
-            setUser({
+            console.log('⚠️ No profile found, creating fallback user for:', session.user.email)
+            const fallbackUser = {
               id: session.user.id,
               email: session.user.email!,
               name: session.user.user_metadata?.name || session.user.email!.split('@')[0],
               role: session.user.user_metadata?.role || 'employee',
               created_at: session.user.created_at
-            })
+            }
+            setUser(fallbackUser)
+            console.log('✅ Fallback user set:', fallbackUser.email)
           }
         } catch (error) {
-          console.error('Sign in profile error:', error)
-          // Set fallback user even on error
-          setUser({
+          console.error('❌ Profile lookup error:', error)
+          // Always set fallback user on error
+          const fallbackUser = {
             id: session.user.id,
             email: session.user.email!,
             name: session.user.user_metadata?.name || session.user.email!.split('@')[0],
             role: session.user.user_metadata?.role || 'employee',
             created_at: session.user.created_at
-          })
+          }
+          setUser(fallbackUser)
+          console.log('✅ Error fallback user set:', fallbackUser.email)
+        } finally {
+          processingSignIn = false
         }
-        console.log('Setting loading to false after SIGNED_IN')
-        setLoading(false)
       } else if (event === 'SIGNED_OUT') {
         console.log('Processing SIGNED_OUT event')
         setUser(null)
