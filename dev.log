@@ -1,0 +1,255 @@
+
+> reviewboost@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.3.4 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.102:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Compiled middleware in 89ms
+ ✓ Ready in 674ms
+ ○ Compiling /signup ...
+ ✓ Compiled /signup in 1050ms
+ HEAD /signup 200 in 1226ms
+ GET /signup 200 in 92ms
+ GET /signup 200 in 54ms
+ GET /signup 200 in 85ms
+ ✓ Compiled /favicon.ico in 159ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 413ms
+ GET /signup 200 in 38ms
+ ⚠ Fast Refresh had to perform a full reload when ./src/hooks/useAuth.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 27ms
+ GET /signup 200 in 177ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 213ms
+ ○ Compiling /_not-found/page ...
+ ✓ Compiled /_not-found/page in 587ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 637ms
+ ✓ Compiled middleware in 2ms
+ ✓ Compiled in 4ms
+ ✓ Compiled / in 339ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.uo66gwrgcs'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.uo66gwrgcs'
+}
+ ✓ Compiled /_error in 328ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.5lffnpdwlpv'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.5lffnpdwlpv'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.uo66gwrgcs'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.uo66gwrgcs'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.122uhwfbu88s'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.122uhwfbu88s'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.hlp08v3uol9'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.hlp08v3uol9'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/_not-found/page/app-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/_not-found/page/app-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.np90c1ock7j'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.np90c1ock7j'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.8th05knsoqx'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.8th05knsoqx'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.qm6wn3mgjk'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/static/development/_buildManifest.js.tmp.qm6wn3mgjk'
+}
+ ✓ Compiled in 43ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled in 39ms
+ ✓ Compiled / in 7ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'
+}
+ ✓ Compiled in 44ms
+ ✓ Compiled / in 16ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/_not-found/page/app-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/_not-found/page/app-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/page/server-reference-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/_not-found/page/app-build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/app/_not-found/page/app-build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'] {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/nickmangubat/Documents/Coding/reviewboost/.next/server/pages/_app/build-manifest.json'
+}
+[?25h

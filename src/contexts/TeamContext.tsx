@@ -127,26 +127,47 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     console.error('❌ All team fetch attempts failed')
   }, [user])
 
-  // Detect and handle post-login redirects
+  // Detect and handle post-login redirects - this runs immediately when component mounts
   useEffect(() => {
     if (!mounted) return
     
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
     const isPostLoginPage = ['/dashboard', '/submit-review'].includes(currentPath)
     
-    // If we're on a post-login page and auth is complete but no teams loaded
-    if (isPostLoginPage && !authLoading && user && userTeams.length === 0) {
-      console.log('🚀 Post-login redirect detected, forcing immediate team fetch')
+    // If we're on a post-login page, set up a watcher for when user becomes available
+    if (isPostLoginPage) {
+      console.log('🚀 Post-login page detected, setting up user state watcher')
       
-      // Force immediate team fetch for post-login scenarios
-      const immediateTimer = setTimeout(() => {
-        console.log('🚀 Immediate timer triggered for post-login')
-        fetchUserTeams()
-      }, 500) // Short delay to ensure session is ready
+      // Watch for user state to become available
+      const checkForUser = () => {
+        if (!authLoading && user && userTeams.length === 0) {
+          console.log('🚀 User state now available after redirect, forcing immediate team fetch')
+          fetchUserTeams()
+          return true // Stop checking
+        }
+        return false // Continue checking
+      }
       
-      return () => clearTimeout(immediateTimer)
+      // Check immediately
+      if (checkForUser()) return
+      
+      // If user not ready yet, poll every 100ms for up to 5 seconds
+      let attempts = 0
+      const maxAttempts = 50 // 5 seconds
+      
+      const pollTimer = setInterval(() => {
+        attempts++
+        if (checkForUser() || attempts >= maxAttempts) {
+          clearInterval(pollTimer)
+          if (attempts >= maxAttempts) {
+            console.log('🚀 Post-login user detection timed out')
+          }
+        }
+      }, 100)
+      
+      return () => clearInterval(pollTimer)
     }
-  }, [mounted, authLoading, user, userTeams.length, fetchUserTeams])
+  }, [mounted, authLoading, user, userTeams.length, fetchUserTeams]) // Add all dependencies
 
   // Refresh teams data
   const refreshTeams = useCallback(async () => {

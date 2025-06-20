@@ -102,11 +102,29 @@ mcp__serena_suggest --context "React Hook Form validation patterns"
 mcp__serena_review --file src/app/api/reviews/submit/route.ts
 ```
 
+### Context7 MCP
+Context7 MCP provides up-to-date, version-specific documentation and code examples directly in Claude Code:
+
+**Key Features:**
+- Real-time documentation fetching from official sources
+- Version-specific API references
+- Current code examples and best practices
+- Eliminates outdated or hallucinated code suggestions
+
+**Available Tools:**
+- Access to live documentation for React, Next.js, TypeScript, Tailwind CSS, and other project dependencies
+- Current API references and usage examples
+- Up-to-date migration guides and best practices
+
+**Usage:**
+Context7 works automatically through MCP tools when Claude Code needs current documentation. No special commands required - it provides enhanced, up-to-date information for all coding tasks.
+
 **Best Practices:**
 - Use Serena for code quality insights before major refactoring
 - Leverage AI suggestions when implementing new features
 - Run code reviews on critical business logic components
 - Ask for architecture recommendations for complex features
+- Context7 ensures all documentation references are current and accurate
 
 ## Recent Work
 - Fixed authentication race conditions
