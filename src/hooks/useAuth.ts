@@ -12,12 +12,17 @@ export function useAuth() {
 
   // Simplified checkUser function
   const checkUser = useCallback(async (forceCheck = false) => {
-    if (checkingUser.current && !forceCheck) return
+    if (checkingUser.current && !forceCheck) {
+      console.log('CheckUser already running, skipping...')
+      return
+    }
     
     checkingUser.current = true
+    console.log('CheckUser starting...')
     
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser()
+      console.log('Auth user retrieved:', authUser?.email || 'none')
       
       if (authUser) {
         // First try normal profile query
@@ -28,9 +33,11 @@ export function useAuth() {
           .single()
         
         if (profile) {
+          console.log('Profile found:', profile.email)
           setUser(profile)
         } else if (authUser.email) {
           // Fallback to auth metadata if profile not found
+          console.log('No profile found, using fallback for:', authUser.email)
           const fallbackProfile: User = {
             id: authUser.id,
             email: authUser.email,
@@ -40,15 +47,18 @@ export function useAuth() {
           }
           setUser(fallbackProfile)
         } else {
+          console.log('No email found, setting user to null')
           setUser(null)
         }
       } else {
+        console.log('No auth user, setting user to null')
         setUser(null)
       }
     } catch (error) {
       console.error('Error checking user:', error)
       setUser(null)
     } finally {
+      console.log('CheckUser complete, setting loading to false')
       setLoading(false)
       checkingUser.current = false
     }
@@ -58,11 +68,47 @@ export function useAuth() {
     // Initial user check
     checkUser()
     
+    // Fallback timeout to ensure loading doesn't get stuck
+    const loadingTimeout = setTimeout(() => {
+      console.log('Auth loading timeout reached, forcing loading to false')
+      setLoading(false)
+    }, 5000) // 5 second timeout
+    
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      clearTimeout(loadingTimeout) // Clear timeout if auth state changes
+      
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        // Force check on auth state changes to ensure loading state is properly updated
-        await checkUser(true)
+        // Directly handle the session from the event instead of calling checkUser again
+        if (session?.user) {
+          try {
+            const { data: profile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+            
+            if (profile) {
+              setUser(profile)
+            } else {
+              // Fallback to auth metadata if profile not found
+              const fallbackProfile: User = {
+                id: session.user.id,
+                email: session.user.email!,
+                name: session.user.user_metadata?.name || session.user.email!.split('@')[0],
+                role: session.user.user_metadata?.role || 'employee',
+                created_at: session.user.created_at
+              }
+              setUser(fallbackProfile)
+            }
+          } catch (error) {
+            console.error('Error in auth state change:', error)
+            setUser(null)
+          }
+        } else {
+          setUser(null)
+        }
+        setLoading(false)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setLoading(false)
@@ -70,6 +116,7 @@ export function useAuth() {
     })
 
     return () => {
+      clearTimeout(loadingTimeout)
       subscription.unsubscribe()
     }
   }, [supabase, checkUser])
