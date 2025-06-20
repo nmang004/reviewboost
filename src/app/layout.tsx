@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { TeamProvider } from "@/contexts/TeamContext";
 import ProfileInitializer from "@/components/auth/ProfileInitializer";
+import DataMigration from "@/components/auth/DataMigration";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -35,6 +36,7 @@ export default function RootLayout({
       >
         <TeamProvider>
           <ProfileInitializer />
+          <DataMigration />
           <Header />
           <main className="pt-16 min-h-screen">{children}</main>
           <Footer />
