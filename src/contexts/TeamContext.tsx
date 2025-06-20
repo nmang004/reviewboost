@@ -216,30 +216,64 @@ export function useAuthenticatedFetch() {
 
   const authenticatedFetch = useCallback(async (
     url: string, 
-    options: RequestInit = {}
+    options: RequestInit = {},
+    retryCount = 0
   ) => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) {
-      throw new Error('No authentication token available')
-    }
+    const maxRetries = 2
+    
+    try {
+      // Get fresh session, refresh if needed
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session?.access_token) {
+        // Try to refresh session once
+        if (retryCount === 0) {
+          console.log('Session invalid, attempting refresh...')
+          await supabase.auth.refreshSession()
+          return authenticatedFetch(url, options, 1)
+        }
+        throw new Error('Authentication session invalid or expired')
+      }
 
-    // Add team_id to URL if it's a team-scoped endpoint and team is selected
-    let finalUrl = url
-    if (currentTeam && (url.includes('/api/leaderboard') || url.includes('/api/dashboard/stats'))) {
-      const separator = url.includes('?') ? '&' : '?'
-      finalUrl = `${url}${separator}team_id=${currentTeam.id}`
-    }
+      // Add team_id to URL if it's a team-scoped endpoint and team is selected
+      let finalUrl = url
+      if (currentTeam && (url.includes('/api/leaderboard') || url.includes('/api/dashboard/stats'))) {
+        const separator = url.includes('?') ? '&' : '?'
+        finalUrl = `${url}${separator}team_id=${currentTeam.id}`
+      }
 
-    const headers = {
-      'Authorization': `Bearer ${session.access_token}`,
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`,
+        'x-jwt-token': session.access_token, // Add explicit JWT token header for API validation
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
 
-    return fetch(finalUrl, {
-      ...options,
-      headers
-    })
+      const response = await fetch(finalUrl, {
+        ...options,
+        headers
+      })
+
+      // Handle auth errors with retry
+      if (response.status === 401 && retryCount < maxRetries) {
+        console.log('Auth error, refreshing session and retrying...')
+        await supabase.auth.refreshSession()
+        return authenticatedFetch(url, options, retryCount + 1)
+      }
+
+      return response
+    } catch (error) {
+      console.error(`Authenticated fetch failed (attempt ${retryCount + 1}/${maxRetries + 1}):`, error)
+      
+      // Retry on network errors, but not on auth errors after max retries
+      if (retryCount < maxRetries && error instanceof Error && error.message.includes('fetch')) {
+        console.log('Network error, retrying...')
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)))
+        return authenticatedFetch(url, options, retryCount + 1)
+      }
+      
+      throw error
+    }
   }, [currentTeam, supabase])
 
   return authenticatedFetch
