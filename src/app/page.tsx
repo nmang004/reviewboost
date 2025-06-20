@@ -1,40 +1,9 @@
-'use client'
-
 import Link from "next/link";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Star, Users, TrendingUp } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Handle authentication redirect after email confirmation
-    if (!loading && user) {
-      console.log('✅ User authenticated after confirmation, redirecting...')
-      if (user.role === 'business_owner') {
-        router.push('/dashboard')
-      } else {
-        router.push('/submit-review')
-      }
-    }
-  }, [user, loading, router])
-
-  // Show loading while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">

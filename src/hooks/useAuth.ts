@@ -128,7 +128,8 @@ export function useAuth() {
         data: {
           name,
           role,
-        }
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     })
     
