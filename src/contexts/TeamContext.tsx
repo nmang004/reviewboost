@@ -29,6 +29,14 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [currentTeam, setCurrentTeam] = useState<TeamWithUserRole | null>(null)
   const [userTeams, setUserTeams] = useState<TeamWithUserRole[]>([])
   const [teamsLoading, setTeamsLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  // Track component mounting
+  useEffect(() => {
+    console.log('🎯 TeamProvider mounted')
+    setMounted(true)
+    return () => console.log('💀 TeamProvider unmounting')
+  }, [])
 
   // Fetch user teams from API with retry logic
   const fetchUserTeams = useCallback(async () => {
@@ -145,25 +153,52 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch teams when user and auth state are ready
   useEffect(() => {
+    console.log('🔄 TeamContext useEffect triggered:', {
+      authLoading,
+      user: user?.email,
+      userExists: !!user,
+      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'server'
+    })
+    
     if (authLoading) {
+      console.log('⏳ Auth still loading, waiting...')
       return
     }
     
     if (user) {
+      console.log('👤 User found, scheduling team fetch in 3 seconds...')
       // Longer delay for post-redirect scenarios
       // The redirect resets React state, so we need more time for session restoration
       const timer = setTimeout(() => {
+        console.log('⏰ Timer fired, calling fetchUserTeams')
         fetchUserTeams()
       }, 3000) // Increased to 3 seconds to match what works on refresh
       
-      return () => clearTimeout(timer)
+      return () => {
+        console.log('🧹 Cleaning up timer')
+        clearTimeout(timer)
+      }
     } else {
+      console.log('❌ No user found, clearing teams')
       setUserTeams([])
       setCurrentTeam(null)
       setTeamsLoading(false)
       localStorage.removeItem('currentTeamId')
     }
   }, [user, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Additional effect to handle cases where the main effect doesn't trigger
+  useEffect(() => {
+    if (mounted && !authLoading && user && userTeams.length === 0) {
+      console.log('🔄 Backup effect: User exists but no teams loaded, trying backup fetch')
+      const backupTimer = setTimeout(() => {
+        console.log('🔄 Backup timer triggered, calling fetchUserTeams')
+        fetchUserTeams()
+      }, 1000) // Shorter delay for backup attempt
+      
+      return () => clearTimeout(backupTimer)
+    }
+  }, [mounted, authLoading, user, userTeams.length, fetchUserTeams])
 
   const value: TeamContextType = {
     currentTeam,
