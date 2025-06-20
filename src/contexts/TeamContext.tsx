@@ -93,6 +93,10 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
         setCurrentTeam(null)
         localStorage.removeItem('currentTeamId')
       }
+      
+      // Success - set loading to false
+      console.log('TeamContext: Team fetch completed successfully')
+      setTeamsLoading(false)
     } catch (error) {
       console.error(`TeamContext: Team fetch error (attempt ${retryCount + 1}):`, error)
       
@@ -106,10 +110,6 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
         return // Don't set loading to false yet
       } else {
         console.error('TeamContext: Max retries exceeded, giving up')
-      }
-    } finally {
-      // Only set loading to false if we're not retrying
-      if (retryCount >= maxRetries) {
         setTeamsLoading(false)
       }
     }
@@ -187,7 +187,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const value: TeamContextType = {
     currentTeam,
     userTeams,
-    teamsLoading: authLoading || teamsLoading,
+    teamsLoading,
     selectTeam,
     refreshTeams,
     isTeamAdmin,
