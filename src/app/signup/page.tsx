@@ -29,6 +29,7 @@ export default function SignupPage() {
   const { signUp } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [role, setRole] = useState<'employee' | 'business_owner'>('employee')
 
   const {
@@ -42,6 +43,7 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true)
     setError(null)
+    setSuccess(null)
 
     console.log('📝 Starting signup attempt for:', data.email)
     console.log('🎭 Role selected:', role)
@@ -50,26 +52,39 @@ export default function SignupPage() {
       console.log('📡 Calling signUp...')
       const result = await signUp(data.email, data.password, data.name, role)
       console.log('✅ SignUp result:', result)
+      
+      // Check if email confirmation is needed
+      if ((result as any).needsEmailConfirmation) {
+        console.log('📧 Email confirmation required')
+        setSuccess('Account created successfully! Please check your email and click the confirmation link to complete your registration.')
+        return
+      }
+      
       console.log('👤 User profile:', result.userProfile)
       console.log('🏷️ User role from database:', result.userProfile?.role)
       
-      // Redirect based on user role
+      // Redirect based on user role if profile was created
       if (result.userProfile?.role === 'business_owner') {
         console.log('🏢 Redirecting to dashboard...')
         router.push('/dashboard')
-      } else {
+      } else if (result.userProfile?.role === 'employee') {
         console.log('👨‍💼 Redirecting to submit-review...')
         router.push('/submit-review')
+      } else {
+        // Profile wasn't created but auth user exists - show success message
+        setSuccess('Account created successfully! Please check your email and click the confirmation link to complete your registration.')
       }
     } catch (error: unknown) {
       console.error('❌ Signup error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to create account'
-      if (errorMessage.includes('already registered')) {
+      if (errorMessage.includes('already registered') || errorMessage.includes('User already registered')) {
         setError('An account with this email already exists')
       } else if (errorMessage.includes('email')) {
         setError('Please enter a valid email address')
+      } else if (errorMessage.includes('Password')) {
+        setError('Password must be at least 6 characters long')
       } else {
-        setError(errorMessage)
+        setError('Failed to create account. Please try again.')
       }
     } finally {
       setIsLoading(false)
@@ -175,6 +190,12 @@ export default function SignupPage() {
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                 {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                {success}
               </div>
             )}
 

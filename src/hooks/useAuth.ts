@@ -114,6 +114,12 @@ export function useAuth() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          name,
+          role,
+        }
+      }
     })
     
     console.log('🔐 Supabase auth signup response:', { data, error })
@@ -123,8 +129,20 @@ export function useAuth() {
       throw error
     }
     
-    // Create user profile in database
-    if (data.user) {
+    // Check if user needs email confirmation
+    if (data.user && !data.user.email_confirmed_at) {
+      console.log('📧 User needs email confirmation, profile will be created after confirmation')
+      // Return success but indicate email confirmation is needed
+      return { 
+        data, 
+        error, 
+        userProfile: undefined,
+        needsEmailConfirmation: true 
+      }
+    }
+    
+    // If user is immediately confirmed, create profile
+    if (data.user && data.user.email_confirmed_at) {
       console.log('👤 Creating user profile for ID:', data.user.id)
       
       const { data: profile, error: profileError } = await supabase
@@ -142,7 +160,8 @@ export function useAuth() {
       
       if (profileError) {
         console.error('❌ Error creating user profile:', profileError)
-        throw profileError
+        // Don't throw error here - the user is created, profile creation can be retried
+        return { data, error, userProfile: undefined, profileError }
       }
       
       if (profile) {
@@ -150,8 +169,6 @@ export function useAuth() {
         setUser(profile)
         return { data, error, userProfile: profile as User }
       }
-    } else {
-      console.log('⚠️ No user in signup response')
     }
     
     return { data, error, userProfile: undefined }
