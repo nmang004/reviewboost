@@ -34,9 +34,14 @@ class AuthManager extends EventTarget {
       // Get initial session
       const { data: { user: authUser } } = await this.supabase.auth.getUser()
       
-      if (authUser) {
+      if (authUser && authUser.email) {
         console.log('🔍 AuthManager: Found existing user, loading profile:', authUser.email)
-        await this.loadUserProfile(authUser)
+        await this.loadUserProfile({
+          id: authUser.id,
+          email: authUser.email,
+          user_metadata: authUser.user_metadata,
+          created_at: authUser.created_at
+        })
       } else {
         console.log('📭 AuthManager: No existing user found')
         this.updateState({ user: null, loading: false })
@@ -47,12 +52,17 @@ class AuthManager extends EventTarget {
     }
 
     // Set up persistent auth state listener
-    this.authSubscription = this.supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = this.supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔔 AuthManager: Auth state change event:', event, session?.user?.email)
       
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (event === 'SIGNED_IN' && session?.user && session.user.email) {
         console.log('✅ AuthManager: Processing SIGNED_IN event for:', session.user.email)
-        await this.loadUserProfile(session.user)
+        await this.loadUserProfile({
+          id: session.user.id,
+          email: session.user.email,
+          user_metadata: session.user.user_metadata,
+          created_at: session.user.created_at
+        })
         this.dispatchEvent(new CustomEvent('sign-in', { detail: this.currentState.user }))
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 AuthManager: Processing SIGNED_OUT event')
@@ -64,6 +74,7 @@ class AuthManager extends EventTarget {
       }
     })
 
+    this.authSubscription = subscription
     this.initialized = true
     console.log('✨ AuthManager: Initialization completed')
   }
@@ -86,8 +97,8 @@ class AuthManager extends EventTarget {
         const fallbackUser: User = {
           id: authUser.id,
           email: authUser.email!,
-          name: authUser.user_metadata?.name || authUser.email!.split('@')[0],
-          role: authUser.user_metadata?.role || 'employee',
+          name: (authUser.user_metadata?.name as string) || authUser.email!.split('@')[0],
+          role: (authUser.user_metadata?.role as 'employee' | 'business_owner') || 'employee',
           created_at: authUser.created_at
         }
         this.updateState({ user: fallbackUser, loading: false })
@@ -100,8 +111,8 @@ class AuthManager extends EventTarget {
       const fallbackUser: User = {
         id: authUser.id,
         email: authUser.email!,
-        name: authUser.user_metadata?.name || authUser.email!.split('@')[0],
-        role: authUser.user_metadata?.role || 'employee',
+        name: (authUser.user_metadata?.name as string) || authUser.email!.split('@')[0],
+        role: (authUser.user_metadata?.role as 'employee' | 'business_owner') || 'employee',
         created_at: authUser.created_at
       }
       this.updateState({ user: fallbackUser, loading: false })
