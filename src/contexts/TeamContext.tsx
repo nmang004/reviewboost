@@ -29,6 +29,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [currentTeam, setCurrentTeam] = useState<TeamWithUserRole | null>(null)
   const [userTeams, setUserTeams] = useState<TeamWithUserRole[]>([])
   const [teamsLoading, setTeamsLoading] = useState(true)
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false)
 
   // Fetch user teams from API
   const fetchUserTeams = useCallback(async () => {
@@ -141,40 +142,62 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     return isTeamAdmin(teamId)
   }, [isTeamAdmin])
 
-  // Fetch teams when user changes and auth is not loading
+  // Robust team fetching with polling approach
   useEffect(() => {
-    console.log('🔄 TeamContext useEffect triggered:', { 
+    console.log('🔄 TeamContext main effect triggered:', { 
       authLoading, 
       user: user?.email, 
-      userExists: !!user 
+      userExists: !!user,
+      hasAttemptedFetch,
+      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'server'
     })
     
+    // Reset attempt flag when auth state changes
     if (authLoading) {
-      console.log('⏳ Auth still loading, waiting...')
-      // Still loading auth, keep teams loading state
+      console.log('⏳ Auth still loading, resetting attempt flag...')
+      setHasAttemptedFetch(false)
       return
     }
     
-    if (user) {
-      console.log('👤 User authenticated, scheduling team fetch in 1 second...')
-      // Add additional delay on initial load to ensure everything is ready
-      const timer = setTimeout(() => {
-        console.log('⏰ Timer triggered, calling fetchUserTeams')
-        fetchUserTeams()
-      }, 1000) // 1 second delay for initial load
+    if (user && !hasAttemptedFetch) {
+      console.log('👤 User authenticated, starting team fetch process...')
+      setHasAttemptedFetch(true)
+      
+      // Start the fetch process with multiple attempts
+      const attemptFetch = async () => {
+        console.log('🚀 Starting team fetch attempt...')
+        await fetchUserTeams()
+      }
+      
+      // Initial attempt after 1 second
+      const timer = setTimeout(attemptFetch, 1000)
       
       return () => {
         console.log('🧹 Cleaning up timer')
         clearTimeout(timer)
       }
-    } else {
-      console.log('❌ No user, clearing teams')
+    } else if (!authLoading && !user) {
+      console.log('❌ Auth finished but no user found, clearing teams')
       setUserTeams([])
       setCurrentTeam(null)
       setTeamsLoading(false)
       localStorage.removeItem('currentTeamId')
     }
-  }, [user, authLoading, fetchUserTeams])
+  }, [user, authLoading, hasAttemptedFetch, fetchUserTeams])
+
+  // Fallback polling mechanism
+  useEffect(() => {
+    if (!authLoading && user && userTeams.length === 0 && !teamsLoading) {
+      console.log('🔁 Fallback: User exists but no teams loaded, retrying...')
+      
+      const retryTimer = setTimeout(() => {
+        console.log('🔄 Retry timer triggered')
+        fetchUserTeams()
+      }, 2000)
+      
+      return () => clearTimeout(retryTimer)
+    }
+  }, [authLoading, user, userTeams.length, teamsLoading, fetchUserTeams])
 
   const value: TeamContextType = {
     currentTeam,
